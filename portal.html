@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Portal Privado — Instituto Flor de Lotus. Acesso exclusivo para familias e parceiros.">
@@ -46,8 +51,34 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
 .nav-links a{text-decoration:none;font-size:.78rem;font-weight:400;color:var(--txm);padding:.4rem .55rem;border-radius:50px;transition:all .3s;white-space:nowrap;display:block}
 .nav-links a:hover,.nav-links a.active{color:var(--lild);background:rgba(123,135,196,.08)}
 .nav-cta-btn{background:linear-gradient(135deg,var(--pk),var(--lild))!important;color:white!important;padding:.45rem 1rem!important;border-radius:50px!important;font-weight:500!important;font-size:.78rem!important;box-shadow:0 4px 16px rgba(232,126,200,.3);white-space:nowrap;text-decoration:none;display:inline-block;cursor:pointer}
-.lang-wrap{display:flex;background:var(--lilbg2);border-radius:50px;overflow:hidden;border:1px solid var(--lb2);margin-left:.4rem;flex-shrink:0}
-.lb{padding:.32rem .85rem;font-family:var(--fb);font-size:.72rem;font-weight:500;letter-spacing:.08em;border:none;background:transparent;cursor:pointer;color:var(--txl);transition:all .3s;text-transform:uppercase}
+.lang-wrap{
+  position:relative;flex-shrink:0;margin-left:.4rem;
+}
+.lang-trigger{
+  display:flex;align-items:center;gap:.3rem;
+  background:var(--lilbg2);border:1px solid var(--lb2);
+  border-radius:50px;padding:.32rem .85rem;
+  font-family:var(--fb);font-size:.72rem;font-weight:600;
+  letter-spacing:.08em;color:var(--lild);cursor:pointer;
+  text-transform:uppercase;transition:var(--tr);
+}
+.lang-trigger:hover{border-color:var(--lild)}
+.lang-trigger .car{font-size:.6rem;transition:transform .25s;display:inline-block}
+.lang-wrap.open .lang-trigger .car{transform:rotate(180deg)}
+.lang-menu{
+  display:none;position:absolute;top:calc(100% + 6px);right:0;
+  background:white;border:1px solid var(--lb2);border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.12);overflow:hidden;
+  min-width:84px;z-index:9999;
+}
+.lang-wrap.open .lang-menu{display:block}
+.lb{
+  display:block;width:100%;padding:.55rem .9rem;font-family:var(--fb);
+  font-size:.74rem;font-weight:500;letter-spacing:.06em;
+  border:none;background:transparent;cursor:pointer;text-align:left;
+  color:var(--txm);transition:background .2s;text-transform:uppercase;
+}
+.lb:hover{background:var(--lilbg)}
 .lb.active{background:var(--lild);color:white}
 .nav-toggle{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:.3rem;flex-shrink:0}
 .nav-toggle span{display:block;width:22px;height:2px;background:var(--txm);border-radius:2px;transition:all .3s}
@@ -228,7 +259,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
   .tab-btn{font-size:.75rem;padding:.45rem .8rem}
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-lib.min.js"></script>
 </head>
 <body>
 <div id="topbar">
@@ -249,11 +280,20 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
       <li><a href="portal.html" style="color:var(--lild);font-weight:500">Portal</a></li>
     </ul>
     <div class="nav-right">
+      <div id="nav-user-badge" style="display:none;align-items:center;gap:.5rem;margin-right:.3rem">
+        <span id="nav-user-name" style="font-size:.78rem;color:var(--tx);font-weight:500"></span>
+        <button onclick="doLogout()" style="font-size:.72rem;color:var(--txl);background:transparent;border:1px solid var(--lb2);padding:.3rem .7rem;border-radius:50px;cursor:pointer;font-family:var(--fb)">&#x2190; Sair</button>
+      </div>
       <a href="contato.html" class="nav-cta-btn"><span class="lpt-i">Agendar</span><span class="len-i">Book</span><span class="les-i" style="display:none">Reservar</span></a>
-      <div class="lang-wrap">
-        <button class="lb active" onclick="setLang('pt',this)">PT</button>
-        <button class="lb" onclick="setLang('en',this)">EN</button>
-        <button class="lb" onclick="setLang('es',this)">ES</button>
+      <div class="lang-wrap" id="lang-wrap">
+        <button class="lang-trigger" onclick="toggleLangMenu()" type="button">
+          <span id="lang-current">PT</span><span class="car">&#9662;</span>
+        </button>
+        <div class="lang-menu">
+          <button class="lb active" onclick="setLang('pt',this)">PT</button>
+          <button class="lb" onclick="setLang('en',this)">EN</button>
+          <button class="lb" onclick="setLang('es',this)">ES</button>
+        </div>
       </div>
       <button class="nav-toggle" onclick="document.getElementById('nav-links').classList.toggle('open')" aria-label="Menu">
         <span></span><span></span><span></span>
@@ -294,7 +334,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
 <span class="ptag les" style="display:none">&#x1F465; Comunidad de Padres</span>
     </div>
     <span class="profile-cta"><span class="lpt-i">Entrar &#x2192;</span><span class="len-i">Log In &#x2192;</span>
-<span class="les-i">Ingresar &#x2192;</span></span>
+<span class="les-i" style="display:none">Ingresar &#x2192;</span></span>
   </div>
 
   <div class="profile-card" onclick="openLogin('partners')" id="card-partners">
@@ -318,7 +358,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
 <span class="ptag les" style="display:none">&#x1F4E1; Rondas Virtuales</span>
     </div>
     <span class="profile-cta"><span class="lpt-i">Entrar &#x2192;</span><span class="len-i">Log In &#x2192;</span>
-<span class="les-i">Ingresar &#x2192;</span></span>
+<span class="les-i" style="display:none">Ingresar &#x2192;</span></span>
   </div>
 </div>
 <div style="height:3rem"></div>
@@ -341,7 +381,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
     </div>
     <button class="login-btn" onclick="doLogin()" id="login-btn">
       <span class="lpt-i">Entrar no Portal</span><span class="len-i">Enter Portal</span>
-<span class="les-i">Entrar al Portal</span>
+<span class="les-i" style="display:none">Entrar al Portal</span>
     </button>
     <p class="login-help lpt">Primeiro acesso? <a href="contato.html">Solicitar credenciais</a> &nbsp;&middot;&nbsp; Esqueceu a senha? <a href="contato.html">Fale conosco</a></p>
     <p class="login-help len" style="display:none">First access? <a href="contato.html">Request credentials</a> &nbsp;&middot;&nbsp; Forgot password? <a href="contato.html">Contact us</a></p>
@@ -358,7 +398,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
       <h2 class="dash-welcome len" style="display:none">Welcome, <span>Family</span> &#x1FAB7;</h2>
     </div>
     <button class="dash-logout" onclick="doLogout()"><span class="lpt-i">&#x2190; Sair</span><span class="len-i">&#x2190; Logout</span>
-<span class="les-i">&#x2190; Logout</span></button>
+<span class="les-i" style="display:none">&#x2190; Logout</span></button>
   </div>
 
   <div class="stat-boxes">
@@ -376,15 +416,15 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
 
   <div class="tab-nav" id="tab-nav-parents">
     <button class="tab-btn active" onclick="switchTab('parents','materiais',this)">&#x1F4DA; <span class="lpt-i">Materiais</span><span class="len-i">Materials</span>
-<span class="les-i">Materiales</span></button>
+<span class="les-i" style="display:none">Materiales</span></button>
     <button class="tab-btn" onclick="switchTab('parents','atividades',this)">&#x1F3AF; <span class="lpt-i">Atividades em Casa</span><span class="len-i">Home Activities</span>
-<span class="les-i">Actividades en Casa</span></button>
+<span class="les-i" style="display:none">Actividades en Casa</span></button>
     <button class="tab-btn" onclick="switchTab('parents','assistente',this)">&#x1F916; <span class="lpt-i">Assistente IA</span><span class="len-i">AI Assistant</span>
-<span class="les-i">Asistente IA</span></button>
+<span class="les-i" style="display:none">Asistente IA</span></button>
     <button class="tab-btn" onclick="switchTab('parents','comunidade',this)">&#x1F465; <span class="lpt-i">Comunidade</span><span class="len-i">Community</span>
-<span class="les-i">Comunidad</span></button>
+<span class="les-i" style="display:none">Comunidad</span></button>
     <button class="tab-btn" onclick="switchTab('parents','agenda',this)">&#x1F4C5; <span class="lpt-i">Agenda</span><span class="len-i">Schedule</span>
-<span class="les-i">Agenda</span></button>
+<span class="les-i" style="display:none">Agenda</span></button>
   </div>
 
   <!-- MATERIAIS PAIS -->
@@ -401,7 +441,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Como criar rotinas visuais em casa. Modelos prontos para imprimir.</p><p class="mat-desc len" style="display:none">How to create visual routines at home. Ready-to-print templates.</p>
 <p class="mat-desc les" style="display:none">Cómo crear rutinas visuales en casa. Plantillas listas para imprimir.</p>
         <div class="mat-meta"><span class="mat-tag">PDF · 8 pag.</span><button class="mat-download" onclick="dlMat(this)">&#x2B07; <span class="lpt-i">Baixar</span><span class="len-i">Download</span>
-<span class="les-i">Descargar</span></button></div>
+<span class="les-i" style="display:none">Descargar</span></button></div>
       </div>
 
       <div class="mat-card">
@@ -413,7 +453,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Atividades ludicas por faixa etaria (0-3, 4-7, 8-12 anos) para fazer em casa.</p><p class="mat-desc len" style="display:none">Playful activities by age group (0-3, 4-7, 8-12 years) to do at home.</p>
 <p class="mat-desc les" style="display:none">Actividades lúdicas por grupo de edad (0-3, 4-7, 8-12 años) para realizar en casa.</p>
         <div class="mat-meta"><span class="mat-tag">PDF · 24 pag.</span><button class="mat-download" onclick="dlMat(this)">&#x2B07; <span class="lpt-i">Baixar</span><span class="len-i">Download</span>
-<span class="les-i">Descargar</span></button></div>
+<span class="les-i" style="display:none">Descargar</span></button></div>
       </div>
 
       <div class="mat-card">
@@ -425,7 +465,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Estrategias baseadas em evidencias para lidar com crises e comportamentos repetitivos.</p><p class="mat-desc len" style="display:none">Evidence-based strategies to handle crises and repetitive behaviors.</p>
 <p class="mat-desc les" style="display:none">Estrategias basadas en evidencia para manejar crisis y comportamientos repetitivos.</p>
         <div class="mat-meta"><span class="mat-tag">PDF · 12 pag.</span><button class="mat-download" onclick="dlMat(this)">&#x2B07; <span class="lpt-i">Baixar</span><span class="len-i">Download</span>
-<span class="les-i">Descargar</span></button></div>
+<span class="les-i" style="display:none">Descargar</span></button></div>
       </div>
 
       <div class="mat-card">
@@ -437,7 +477,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Video explicativo pela equipe de TO Sensorial. Como identificar sinais e apoiar em casa.</p><p class="mat-desc len" style="display:none">Explanatory video by the Sensory OT team. How to identify signs and support at home.</p>
 <p class="mat-desc les" style="display:none">Video explicativo del equipo de TO Sensorial. Cómo identificar señales y apoyar en casa.</p>
         <div class="mat-meta"><span class="mat-tag">Video · 18 min</span><button class="mat-download" onclick="dlMat(this)">&#x25B6; <span class="lpt-i">Assistir</span><span class="len-i">Watch</span>
-<span class="les-i">Ver</span></button></div>
+<span class="les-i" style="display:none">Ver</span></button></div>
       </div>
 
       <div class="mat-card"><span class="mat-new lpt">Novo</span><span class="mat-new len" style="display:none">New</span>
@@ -450,7 +490,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Estrategias da equipe de Nutricao para expandir o repertorio alimentar com seguranca.</p><p class="mat-desc len" style="display:none">Nutrition team strategies to safely expand the food repertoire.</p>
 <p class="mat-desc les" style="display:none">Estrategias del equipo de Nutrición para ampliar el repertorio alimentario de forma segura.</p>
         <div class="mat-meta"><span class="mat-tag">PDF · 10 pag.</span><button class="mat-download" onclick="dlMat(this)">&#x2B07; <span class="lpt-i">Baixar</span><span class="len-i">Download</span>
-<span class="les-i">Descargar</span></button></div>
+<span class="les-i" style="display:none">Descargar</span></button></div>
       </div>
 
       <div class="mat-card">
@@ -462,7 +502,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Formulario semanal para registrar comportamentos, progressos e dificuldades. Auxilia nos rounds da equipe.</p><p class="mat-desc len" style="display:none">Weekly form to record behaviors, progress and difficulties. Helps in team rounds.</p>
 <p class="mat-desc les" style="display:none">Formulario semanal para registrar conductas, progresos y dificultades. Ayuda en las rondas del equipo.</p>
         <div class="mat-meta"><span class="mat-tag">PDF editavel</span><button class="mat-download" onclick="dlMat(this)">&#x2B07; <span class="lpt-i">Baixar</span><span class="len-i">Download</span>
-<span class="les-i">Descargar</span></button></div>
+<span class="les-i" style="display:none">Descargar</span></button></div>
       </div>
 
       <div class="mat-card">
@@ -474,7 +514,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Guia pratico para orientar professores e coordenadores. Inclui carta modelo.</p><p class="mat-desc len" style="display:none">Practical guide to orient teachers. Includes template letter.</p>
 <p class="mat-desc les" style="display:none">Guía práctica para orientar a los profesores. Incluye carta modelo.</p>
         <div class="mat-meta"><span class="mat-tag">PDF · 6 pag.</span><button class="mat-download" onclick="dlMat(this)">&#x2B07; <span class="lpt-i">Baixar</span><span class="len-i">Download</span>
-<span class="les-i">Descargar</span></button></div>
+<span class="les-i" style="display:none">Descargar</span></button></div>
       </div>
 
       <div class="mat-card">
@@ -486,7 +526,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Protocolo adaptado para criancas neurodivergentes. Evidencias e aplicacao pratica.</p><p class="mat-desc len" style="display:none">Protocol adapted for neurodivergent children. Evidence and practical application.</p>
 <p class="mat-desc les" style="display:none">Protocolo adaptado para niños neurodivergentes. Evidencia y aplicación práctica.</p>
         <div class="mat-meta"><span class="mat-tag">PDF · 9 pag.</span><button class="mat-download" onclick="dlMat(this)">&#x2B07; <span class="lpt-i">Baixar</span><span class="len-i">Download</span>
-<span class="les-i">Descargar</span></button></div>
+<span class="les-i" style="display:none">Descargar</span></button></div>
       </div>
 
       <div class="mat-card">
@@ -497,7 +537,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <p class="mat-desc lpt">Webinar gravado com Psicologia e Neurologia. Causas, mitos e estrategias praticas.</p><p class="mat-desc len" style="display:none">Recorded webinar with Psychology and Neurology. Causes, myths and practical strategies.</p>
 <p class="mat-desc les" style="display:none">Webinar grabado con Psicología y Neurología. Causas, mitos y estrategias prácticas.</p>
         <div class="mat-meta"><span class="mat-tag">Video · 42 min</span><button class="mat-download" onclick="dlMat(this)">&#x25B6; <span class="lpt-i">Assistir</span><span class="len-i">Watch</span>
-<span class="les-i">Ver</span></button></div>
+<span class="les-i" style="display:none">Ver</span></button></div>
       </div>
 
     </div>
@@ -523,7 +563,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
       <div class="mat-card"><span class="mat-category cat-video">Video</span><span class="mat-icon">&#x1F3B5;</span><h3 class="mat-title lpt">Musicoterapia em Casa — Guia Pratico</h3><h3 class="mat-title len" style="display:none">Music Therapy at Home — Practical Guide</h3>
 <h3 class="mat-title les" style="display:none">Musicoterapia en Casa — Guía Práctica</h3><p class="mat-desc lpt">Uso terapeutico da musica em casa, com indicacoes da equipe de Musicoterapia.</p><p class="mat-desc len" style="display:none">Therapeutic use of music at home, with recommendations from the Music Therapy team.</p>
 <p class="mat-desc les" style="display:none">Uso terapéutico de la música en casa, con recomendaciones del equipo de Musicoterapia.</p><div class="mat-meta"><span class="mat-tag">PDF + links</span><button class="mat-download" onclick="dlMat(this)">&#x25B6; <span class="lpt-i">Acessar</span><span class="len-i">Access</span>
-<span class="les-i">Acceder</span></button></div></div>
+<span class="les-i" style="display:none">Acceder</span></button></div></div>
       <div class="mat-card"><span class="mat-category cat-formulario lpt">Checklist</span><span class="mat-category cat-formulario len" style="display:none">Checklist</span>
 <span class="mat-category cat-formulario les" style="display:none">Lista de Verificación</span><span class="mat-icon">&#x2705;</span><h3 class="mat-title lpt">Checklist Diario de Rotina</h3><h3 class="mat-title len" style="display:none">Daily Routine Checklist</h3>
 <h3 class="mat-title les" style="display:none">Lista de Verificación de Rutina Diaria</h3><p class="mat-desc lpt">Tabelas visuais e checklists (manha, tarde, noite) para imprimir e usar com a crianca.</p><p class="mat-desc len" style="display:none">Visual tables and checklists (morning, afternoon, evening) to print and use with your child.</p>
@@ -624,7 +664,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <div class="news-item"><div class="news-dot" style="background:var(--lild)"></div><div class="news-text lpt"><strong>Terapia Ocupacional</strong> — Qua 18 Jun, 10h<span class="news-date">Sala TO · 50 min</span></div></div>
         <div class="news-item"><div class="news-dot" style="background:var(--lil)"></div><div class="news-text lpt"><strong>Fonoaudiologia</strong> — Sex 20 Jun, 9h<span class="news-date">Sala Fono · 50 min</span></div></div>
         <div style="margin-top:1.2rem"><a href="contato.html" class="mat-download" style="text-decoration:none"><span class="lpt-i">+ Agendar sessao</span><span class="len-i">+ Book session</span>
-<span class="les-i">+ Reservar sesión</span></a></div>
+<span class="les-i" style="display:none">+ Reservar sesión</span></a></div>
       </div>
       <div class="dash-card">
         <div class="dash-card-header"><h3 class="dash-card-title lpt">&#x1F4C8; Progresso Terapeutico</h3><h3 class="dash-card-title len" style="display:none">&#x1F4C8; Progress</h3>
@@ -653,7 +693,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
       <h2 class="dash-welcome len" style="display:none">Welcome, <span>Partner</span> &#x1FAB7;</h2>
     </div>
     <button class="dash-logout" onclick="doLogout()"><span class="lpt-i">&#x2190; Sair</span><span class="len-i">&#x2190; Logout</span>
-<span class="les-i">&#x2190; Logout</span></button>
+<span class="les-i" style="display:none">&#x2190; Logout</span></button>
   </div>
 
   <div class="stat-boxes">
@@ -665,13 +705,13 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
 
   <div class="tab-nav" id="tab-nav-partners">
     <button class="tab-btn active" onclick="switchTab('partners','protocolos',this)">&#x1F4C4; <span class="lpt-i">Protocolos</span><span class="len-i">Protocols</span>
-<span class="les-i">Protocolos</span></button>
+<span class="les-i" style="display:none">Protocolos</span></button>
     <button class="tab-btn" onclick="switchTab('partners','escola',this)">&#x1F3EB; <span class="lpt-i">Kit Escola</span><span class="len-i">School Kit</span>
-<span class="les-i">Kit Escolar</span></button>
+<span class="les-i" style="display:none">Kit Escolar</span></button>
     <button class="tab-btn" onclick="switchTab('partners','assistente',this)">&#x1F916; <span class="lpt-i">Assistente IA</span><span class="len-i">AI Assistant</span>
-<span class="les-i">Asistente IA</span></button>
+<span class="les-i" style="display:none">Asistente IA</span></button>
     <button class="tab-btn" onclick="switchTab('partners','rounds',this)">&#x1F4E1; <span class="lpt-i">Rounds Virtuais</span><span class="len-i">Virtual Rounds</span>
-<span class="les-i">Rondas Virtuales</span></button>
+<span class="les-i" style="display:none">Rondas Virtuales</span></button>
   </div>
 
   <!-- PROTOCOLOS -->
@@ -782,7 +822,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
           <div class="news-item"><div class="news-dot" style="background:var(--lild)"></div><div class="news-text lpt"><strong>Round Escola-Clinica</strong><span class="news-date">26 Jun, 16h30 · Teams</span></div></div>
           <div class="news-item"><div class="news-dot" style="background:var(--lil)"></div><div class="news-text lpt"><strong>Formacao: Integracao Sensorial</strong><span class="news-date">3 Jul, 18h · Online</span></div></div>
           <div style="margin-top:1rem"><a href="contato.html" class="mat-download" style="text-decoration:none"><span class="lpt-i">+ Solicitar round</span><span class="len-i">+ Request round</span>
-<span class="les-i">+ Solicitar ronda</span></a></div>
+<span class="les-i" style="display:none">+ Solicitar ronda</span></a></div>
         </div>
         <div class="dash-card">
           <div class="dash-card-header"><h3 class="dash-card-title lpt">&#x1F4CA; Atualizacoes Clinicas</h3><h3 class="dash-card-title len" style="display:none">&#x1F4CA; Clinical Updates</h3>
@@ -806,7 +846,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
         <div class="news-item"><div class="news-dot" style="background:var(--lil)"></div><div class="news-text lpt"><strong>Round Escola-Clinica</strong><span class="news-date">26 Jun, 16h30 · Microsoft Teams</span></div></div>
         <div class="news-item"><div class="news-dot" style="background:var(--lil)"></div><div class="news-text lpt"><strong>Formacao: Avaliacao Neuropsicologica</strong><span class="news-date">3 Jul, 18h · Online</span></div></div>
         <div style="margin-top:1.2rem"><a href="contato.html" class="mat-download" style="text-decoration:none"><span class="lpt-i">+ Solicitar participacao</span><span class="len-i">+ Request participation</span>
-<span class="les-i">+ Solicitar participación</span></a></div>
+<span class="les-i" style="display:none">+ Solicitar participación</span></a></div>
       </div>
       <div class="dash-card">
         <div class="dash-card-header"><h3 class="dash-card-title lpt">&#x1F4C2; Atas de Rounds Anteriores</h3><h3 class="dash-card-title len" style="display:none">&#x1F4C2; Previous Round Minutes</h3>
@@ -973,7 +1013,22 @@ function setLang(lang,btn){
   document.documentElement.lang=es?'es':(en?'en':'pt-BR');
   try{localStorage.setItem('fl_lang',lang)}catch(e){}
   renderTopbar();
+  // Atualiza o texto do botão-gatilho e fecha o menu dropdown
+  var cur=document.getElementById('lang-current');
+  if(cur)cur.textContent=lang.toUpperCase();
+  var wrap=document.getElementById('lang-wrap');
+  if(wrap)wrap.classList.remove('open');
 }
+function toggleLangMenu(){
+  var wrap=document.getElementById('lang-wrap');
+  if(wrap)wrap.classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('lang-wrap');
+  if(wrap && wrap.classList.contains('open') && !wrap.contains(e.target)){
+    wrap.classList.remove('open');
+  }
+});
 window.addEventListener('scroll',function(){
   var n=document.getElementById('nav');
   if(n){if(window.scrollY>40)n.classList.add('scrolled');else n.classList.remove('scrolled')}
@@ -998,23 +1053,10 @@ function openLogin(profile){
 }
 function closeLogin(){document.getElementById('login-overlay').classList.remove('open')}
 function closeLoginOverlay(e){if(e.target===document.getElementById('login-overlay'))closeLogin()}
-function doLogin(){
-  var btn=document.getElementById('login-btn');
-  btn.textContent='Verificando...';btn.disabled=true;
-  setTimeout(function(){
-    document.getElementById('login-overlay').classList.remove('open');
-    document.getElementById('profile-selector').style.display='none';
-    document.getElementById('dash-'+curProfile).classList.add('open');
-    btn.innerHTML='<span class="lpt-i">Entrar no Portal</span><span class="len-i">Enter Portal</span><span class="les-i">Entrar al Portal</span>';
-    btn.disabled=false;
-    window.scrollTo({top:0,behavior:'smooth'});
-  },1100);
-}
-function doLogout(){
-  document.querySelectorAll('.portal-dashboard').forEach(function(d){d.classList.remove('open')});
-  document.getElementById('profile-selector').style.display='';
-  window.scrollTo({top:0,behavior:'smooth'});
-}
+// As funções doLogin() e doLogout() reais (conectadas ao Supabase) são
+// definidas em portal_supabase.js e atribuídas a window.doLogin / window.doLogout.
+// As versões antigas (simuladas, sem checagem de senha) foram removidas
+// definitivamente daqui para eliminar qualquer risco de execução acidental.
 function switchTab(profile,tab,btn){
   document.querySelectorAll('#tab-nav-'+profile+' .tab-btn').forEach(function(b){b.classList.remove('active')});
   btn.classList.add('active');

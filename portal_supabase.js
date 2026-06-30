@@ -10,7 +10,7 @@
 const SUPABASE_URL  = 'https://imerhiewjfmtzwpqyhcz.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZXJoaWV3amZtdHp3cHF5aGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NTQxNzgsImV4cCI6MjA5NzMzMDE3OH0.QtM8FRrHdatXVUTVPMAyFWexFklq_aWn4e3MGltHGTE';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ══════════════════════════════════════════════════════════════════
 // AUTH — LOGIN REAL
@@ -30,7 +30,7 @@ async function doLoginReal() {
   btn.disabled = true;
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    const { data, error } = await _sb.auth.signInWithPassword({ email, password: pass });
 
     if (error) throw error;
 
@@ -79,6 +79,14 @@ async function doLoginReal() {
       if (profile.role === 'admin') await adminLoadPartners();
     }
 
+    // Mostrar nome do usuário + botão Sair na barra de navegação
+    showNavUserBadge(profile.full_name);
+
+    // Trava de inatividade (20 min) — apenas para admin/staff
+    if (profile.role === 'admin' || profile.role === 'staff') {
+      startInactivityTimer();
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch (err) {
@@ -103,11 +111,24 @@ function showLoginError(msg) {
   setTimeout(() => { if (errEl) errEl.textContent = ''; }, 4000);
 }
 
-async function doLogoutReal() {
-  await supabase.auth.signOut();
+async function doLogoutReal(reason) {
+  await _sb.auth.signOut();
+
+  // Reforço: limpa qualquer resíduo de sessão que o Supabase possa ter
+  // deixado no localStorage, mesmo que signOut() já devesse fazer isso.
+  Object.keys(localStorage)
+    .filter(k => k.startsWith('sb-') || k.includes('supabase'))
+    .forEach(k => localStorage.removeItem(k));
+
   document.querySelectorAll('.portal-dashboard').forEach(d => d.classList.remove('open'));
   document.getElementById('profile-selector').style.display = '';
+  hideNavUserBadge();
+  stopInactivityTimer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (reason === 'inactivity') {
+    alert('Sua sessão foi encerrada por inatividade (20 minutos sem uso). Faça login novamente.');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -144,7 +165,7 @@ async function doSignupReal() {
 
   try {
     // 1. Criar usuário no Auth (o trigger handle_new_user cria o profile automaticamente)
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await _sb.auth.signUp({
       email, password: pass,
       options: { data: { full_name: name, role: role, lang: localStorage.getItem('fl_lang') || 'pt' } }
     });
@@ -155,7 +176,7 @@ async function doSignupReal() {
     // 2. Se for parceiro, criar o registro correspondente em partners
     //    (a política partner_self_insert garante que só o próprio usuário pode fazer isso)
     if (role === 'partner') {
-      const { error: partnerErr } = await supabase.from('partners').insert({
+      const { error: partnerErr } = await _sb.from('partners').insert({
         user_id: data.user.id,
         org_name: orgName,
         type: 'professional', // valor inicial; admin pode refinar depois (clinic/school/health_plan)
@@ -314,7 +335,7 @@ async function loadMaterials(role) {
 // ══════════════════════════════════════════════════════════════════
 
 async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await _sb.auth.getUser();
   if (!user) return;
 
   // Descobrir o role do usuário para saber qual bucket usar
@@ -323,18 +344,18 @@ async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
   const bucket = profile?.role === 'partner' ? 'materiais-parceiros' : 'materiais-pais';
 
   // Registrar acesso (analytics)
-  await supabase.from('material_access').insert({
+  await _sb.from('material_access').insert({
     user_id: user.id,
     material_id: materialId,
     action: fileType === 'video' ? 'view' : 'download'
   });
 
   // Incrementar contador
-  await supabase.rpc('increment_download', { mat_id: materialId });
+  await _sb.rpc('increment_download', { mat_id: materialId });
 
   // Se tiver URL real, abrir; senão mostrar "em breve"
   if (fileUrl && fileUrl.startsWith('http')) {
-    const { data } = await supabase.storage
+    const { data } = await _sb.storage
       .from(bucket)
       .createSignedUrl(fileUrl, 3600); // URL válida por 1 hora
     if (data?.signedUrl) {
@@ -449,7 +470,7 @@ async function loadPartnerDashboard(userId) {
 // ══════════════════════════════════════════════════════════════════
 
 async function checkExistingSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await _sb.auth.getSession();
   if (!session) return;
 
   const { data: profile } = await supabase
@@ -460,17 +481,41 @@ async function checkExistingSession() {
 
   if (!profile || !profile.active) return;
 
+  const dashIdMap = {
+    parent:  'dash-parents',
+    partner: 'dash-partners',
+    admin:   'dash-admin',
+    staff:   'dash-admin'
+  };
+  const dashId = dashIdMap[profile.role] || 'dash-parents';
+
   // Restaurar sessão automaticamente
   document.getElementById('profile-selector').style.display = 'none';
-  document.getElementById('dash-' + profile.role + 's').classList.add('open');
+  const dashEl = document.getElementById(dashId);
+  if (dashEl) dashEl.classList.add('open');
 
-  const welcomeEl = document.querySelector('#dash-' + profile.role + 's .dash-welcome span');
-  if (welcomeEl) welcomeEl.textContent = profile.full_name.split(' ')[0];
+  if (dashId === 'dash-admin') {
+    const nameEl = document.getElementById('admin-name-display');
+    if (nameEl) nameEl.textContent = profile.full_name.split(' ')[0];
+  } else {
+    const welcomeEl = document.querySelector('#' + dashId + ' .dash-welcome span');
+    if (welcomeEl) welcomeEl.textContent = profile.full_name.split(' ')[0];
+  }
 
   if (profile.role === 'parent') {
     await loadParentDashboard(session.user.id);
   } else if (profile.role === 'partner') {
     await loadPartnerDashboard(session.user.id);
+  } else if (profile.role === 'admin' || profile.role === 'staff') {
+    await adminLoadCategories();
+    await adminLoadMaterials();
+    if (profile.role === 'admin') await adminLoadPartners();
+  }
+
+  showNavUserBadge(profile.full_name);
+
+  if (profile.role === 'admin' || profile.role === 'staff') {
+    startInactivityTimer();
   }
 }
 
@@ -571,7 +616,7 @@ async function adminLoadMaterials() {
 async function adminDeleteMaterial(id, title) {
   if (!confirm(`Tem certeza que deseja excluir "${title}"? Esta ação não pode ser desfeita.`)) return;
 
-  const { error } = await supabase.from('materials').delete().eq('id', id);
+  const { error } = await _sb.from('materials').delete().eq('id', id);
 
   if (error) {
     alert('Erro ao excluir: ' + error.message);
@@ -631,7 +676,7 @@ async function adminUploadMaterial() {
       const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
       const path = `${Date.now()}_${safeName}`;
 
-      const { error: upErr } = await supabase.storage.from(bucket).upload(path, file);
+      const { error: upErr } = await _sb.storage.from(bucket).upload(path, file);
       if (upErr) throw upErr;
 
       fileUrl = path;
@@ -639,7 +684,7 @@ async function adminUploadMaterial() {
     }
 
     // Criar o registro do material no banco
-    const { error: insErr } = await supabase.from('materials').insert({
+    const { error: insErr } = await _sb.from('materials').insert({
       category_id: categoryId,
       for_role: forRole,
       title_pt: titlePt,
@@ -720,7 +765,7 @@ async function adminLoadPartners() {
 
 // ── Ativar/desativar parceiro ─────────────────────────────────────
 async function adminTogglePartner(id, newActiveState) {
-  const { error } = await supabase.from('partners').update({ active: newActiveState }).eq('id', id);
+  const { error } = await _sb.from('partners').update({ active: newActiveState }).eq('id', id);
   if (error) {
     alert('Erro: ' + error.message);
     return;
@@ -734,6 +779,62 @@ window.adminDeleteMaterial  = adminDeleteMaterial;
 window.adminUploadMaterial  = adminUploadMaterial;
 window.adminLoadPartners    = adminLoadPartners;
 window.adminTogglePartner   = adminTogglePartner;
+
+// ══════════════════════════════════════════════════════════════════
+// BADGE DE USUÁRIO NA NAVBAR — mostra nome + botão Sair sempre visível
+// ══════════════════════════════════════════════════════════════════
+
+function showNavUserBadge(fullName) {
+  const badge = document.getElementById('nav-user-badge');
+  const nameEl = document.getElementById('nav-user-name');
+  if (!badge || !nameEl) return;
+  nameEl.textContent = fullName.split(' ')[0];
+  badge.style.display = 'flex';
+}
+
+function hideNavUserBadge() {
+  const badge = document.getElementById('nav-user-badge');
+  if (badge) badge.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TRAVA DE INATIVIDADE — 20 minutos, apenas para admin/staff
+// Qualquer movimento de mouse, clique, tecla ou rolagem da página
+// reseta o contador. Após 20 minutos sem nenhuma dessas atividades,
+// a sessão é encerrada automaticamente.
+// ══════════════════════════════════════════════════════════════════
+
+const INACTIVITY_LIMIT_MS = 20 * 60 * 1000; // 20 minutos
+let inactivityTimer = null;
+let inactivityListenersAttached = false;
+
+function resetInactivityTimer() {
+  if (!inactivityTimer && inactivityTimer !== 0) return; // timer não está ativo
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    doLogoutReal('inactivity');
+  }, INACTIVITY_LIMIT_MS);
+}
+
+function startInactivityTimer() {
+  resetInactivityTimer();
+  if (inactivityListenersAttached) return; // evita duplicar listeners
+  ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+    document.addEventListener(evt, resetInactivityTimer, { passive: true });
+  });
+  inactivityListenersAttached = true;
+}
+
+function stopInactivityTimer() {
+  if (inactivityTimer) clearTimeout(inactivityTimer);
+  inactivityTimer = null;
+  if (inactivityListenersAttached) {
+    ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+      document.removeEventListener(evt, resetInactivityTimer);
+    });
+    inactivityListenersAttached = false;
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════
 // FUNÇÃO RPC para incrementar downloads (executar no Supabase):

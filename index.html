@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Instituto Flor de Lotus — Excelencia em cuidado multidisciplinar em Sorocaba SP. 12 especialidades integradas para TEA, TDAH, TOD e Deficiencia Intelectual. Atendimento humanizado e baseado em evidencias.">
 <meta name="keywords" content="clinica multidisciplinar Sorocaba, TEA Sorocaba, TDAH Sorocaba, Instituto Flor de Lotus, terapia ocupacional Sorocaba, fonoaudiologia Sorocaba, neuropsicologia Sorocaba, autismo Sorocaba">
 <meta property="og:title" content="Instituto Flor de Lotus | Clinica Multidisciplinar em Sorocaba SP | TEA, TDAH, Neurodesenvolvimento">
+<link rel="canonical" href="https://www.institutoflordelotus.com.br/">
 <meta property="og:description" content="Instituto Flor de Lotus — Excelencia em cuidado multidisciplinar em Sorocaba SP. 12 especialidades integradas para TEA, TDAH, TOD e Deficiencia Intelectual. Atendimento humanizado e baseado em evidencias.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://www.institutoflordelotus.com.br/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="index, follow">
 <meta property="og:locale:alternate" content="es_ES">
 <link rel="alternate" hreflang="pt-BR" href="https://www.institutoflordelotus.com.br/">
@@ -48,7 +58,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--wh);line-height:1.7;
 .nav-links a:hover{color:var(--lild);background:rgba(123,135,196,.08)}
 .nav-cta{background:linear-gradient(135deg,var(--pk),var(--lild))!important;color:white!important;padding:.5rem 1.3rem!important;border-radius:50px!important;font-weight:500!important;font-size:.82rem!important;box-shadow:0 4px 16px rgba(232,126,200,.3)}
 .nav-cta:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(232,126,200,.4)!important;background:linear-gradient(135deg,var(--pkd),var(--lilds))!important}
-.lang-wrap{display:flex;background:var(--lilbg2);border-radius:50px;overflow:hidden;border:1px solid var(--lb2);margin-left:.5rem}
+/* lang-wrap legado removido - ver definição dropdown abaixo */
 .lb{padding:.35rem .9rem;font-family:var(--fb);font-size:.72rem;font-weight:500;letter-spacing:.08em;border:none;background:transparent;cursor:pointer;color:var(--txl);transition:var(--tr);text-transform:uppercase}
 .lb.active{background:var(--lild);color:white}
 .nav-toggle{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:.3rem}
@@ -261,7 +271,7 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
 .nav-links a:hover{color:var(--lild);background:rgba(123,135,196,.08)}
 .nav-cta-btn{background:linear-gradient(135deg,var(--pk),var(--lild)) !important;color:white !important;padding:.45rem 1rem !important;border-radius:50px !important;font-weight:500 !important;font-size:.78rem !important;box-shadow:0 4px 16px rgba(232,126,200,.3);white-space:nowrap;text-decoration:none;display:inline-block;cursor:pointer}
 .nav-cta-btn:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(232,126,200,.4) !important}
-.lang-wrap{display:flex;background:var(--lilbg2);border-radius:50px;overflow:hidden;border:1px solid var(--lb2);margin-left:.4rem;flex-shrink:0}
+/* lang-wrap legado removido - ver definição dropdown abaixo */
 .lb{padding:.32rem .85rem;font-family:var(--fb);font-size:.72rem;font-weight:500;letter-spacing:.08em;border:none;background:transparent;cursor:pointer;color:var(--txl);transition:all .3s;text-transform:uppercase}
 .lb.active{background:var(--lild);color:white}
 .nav-toggle{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:.3rem;flex-shrink:0}
@@ -366,16 +376,33 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
   box-shadow:0 6px 22px rgba(232,126,200,.4) !important;
 }
 .lang-wrap{
-  display:flex;background:var(--lilbg2);
-  border-radius:50px;overflow:hidden;
-  border:1px solid var(--lb2);margin-left:.4rem;flex-shrink:0;
+  position:relative;flex-shrink:0;margin-left:.4rem;
 }
+.lang-trigger{
+  display:flex;align-items:center;gap:.3rem;
+  background:var(--lilbg2);border:1px solid var(--lb2);
+  border-radius:50px;padding:.32rem .85rem;
+  font-family:var(--fb);font-size:.72rem;font-weight:600;
+  letter-spacing:.08em;color:var(--lild);cursor:pointer;
+  text-transform:uppercase;transition:var(--tr);
+}
+.lang-trigger:hover{border-color:var(--lild)}
+.lang-trigger .car{font-size:.6rem;transition:transform .25s;display:inline-block}
+.lang-wrap.open .lang-trigger .car{transform:rotate(180deg)}
+.lang-menu{
+  display:none;position:absolute;top:calc(100% + 6px);right:0;
+  background:white;border:1px solid var(--lb2);border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.12);overflow:hidden;
+  min-width:84px;z-index:9999;
+}
+.lang-wrap.open .lang-menu{display:block}
 .lb{
-  padding:.32rem .85rem;font-family:var(--fb);
-  font-size:.72rem;font-weight:500;letter-spacing:.08em;
-  border:none;background:transparent;cursor:pointer;
-  color:var(--txl);transition:all .3s;text-transform:uppercase;
+  display:block;width:100%;padding:.55rem .9rem;font-family:var(--fb);
+  font-size:.74rem;font-weight:500;letter-spacing:.06em;
+  border:none;background:transparent;cursor:pointer;text-align:left;
+  color:var(--txm);transition:background .2s;text-transform:uppercase;
 }
+.lb:hover{background:var(--lilbg)}
 .lb.active{background:var(--lild);color:white}
 .nav-toggle{
   display:none;flex-direction:column;gap:5px;
@@ -435,11 +462,16 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
     </ul>
     <div class="nav-right">
       <a href="contato.html" class="nav-cta-btn"><span class="lpt-i">Agendar</span><span class="len-i">Book Now</span>
-<span class="les-i">Reservar</span></a>
-      <div class="lang-wrap">
-        <button class="lb active" onclick="setLang('pt',this)">PT</button>
-        <button class="lb" onclick="setLang('en',this)">EN</button>
-        <button class="lb" onclick="setLang('es',this)">ES</button>
+<span class="les-i" style="display:none">Reservar</span></a>
+      <div class="lang-wrap" id="lang-wrap">
+        <button class="lang-trigger" onclick="toggleLangMenu()" type="button">
+          <span id="lang-current">PT</span><span class="car">&#9662;</span>
+        </button>
+        <div class="lang-menu">
+          <button class="lb active" onclick="setLang('pt',this)">PT</button>
+          <button class="lb" onclick="setLang('en',this)">EN</button>
+          <button class="lb" onclick="setLang('es',this)">ES</button>
+        </div>
       </div>
       <button class="nav-toggle" onclick="toggleMenu()" aria-label="Menu">
         <span></span><span></span><span></span>
@@ -454,17 +486,17 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
   <div class="hp hp1"></div><div class="hp hp2"></div>
   <div class="hcont">
     <div class="hbadge"><span class="lpt-i">10 Anos Transformando Vidas &middot; Sorocaba, SP</span><span class="len-i">10 Years Transforming Lives &middot; Sorocaba, Brazil</span><span class="les-i" style="display:none">10 Años Transformando Vidas &middot; Sorocaba, Brasil</span>
-<span class="les-i">10 Años Transformando Vidas &middot; Sorocaba, Brasil</span></div>
+<span class="les-i" style="display:none">10 Años Transformando Vidas &middot; Sorocaba, Brasil</span></div>
     <h1 class="htit lpt"><em>Instituto</em> Flor de Lotus<br><strong>Cuidado Multidisciplinar</strong><br>de Excelencia</h1>
-    <h1 class="htit len" style="display:none"><em>Instituto</em> Flor de Lotus<br><strong>Multidisciplinary Care</strong><br>of Excellence</h1>
+<div class="htit len" style="display:none"><em>Instituto</em> Flor de Lotus<br><strong>Multidisciplinary Care</strong><br>of Excellence</div>
     <p class="hsub lpt">Atendimento humanizado, integral e baseado em evidencias para TEA, TDAH, TOD e neurodesenvolvimento — 12 especialidades integradas em Sorocaba, SP.</p>
     <p class="hsub len" style="display:none">Humanized, comprehensive, evidence-based care for ASD, ADHD, ODD and neurodevelopment — 12 integrated specialties in Sorocaba, Brazil.</p>
 <p class="hsub les" style="display:none">Atención humanizada, integral y basada en evidencias para TEA, TDAH, TOD y neurodesarrollo — 12 especialidades integradas en un solo lugar.</p>
     <div class="hctas">
       <a href="contato.html" class="bp"><span class="lpt-i">Agendar Consulta &#x2728;</span><span class="len-i">Book Appointment &#x2728;</span><span class="les-i" style="display:none">Reservar Cita &#x2728;</span>
-<span class="les-i">Reservar Cita &#x2728;</span></a>
+<span class="les-i" style="display:none">Reservar Cita &#x2728;</span></a>
       <a href="especialidades.html" class="bo"><span class="lpt-i">Ver Especialidades</span><span class="len-i">View Specialties</span><span class="les-i" style="display:none">Ver Especialidades</span>
-<span class="les-i">Ver Especialidades</span></a>
+<span class="les-i" style="display:none">Ver Especialidades</span></a>
     </div>
     <div class="hstats">
       <div class="hsi"><span class="hsn">10</span><span class="hsl lpt">Anos de Atuacao</span><span class="hsl len" style="display:none">Years of Care</span><span class="hsl les" style="display:none">Años de atención</span>
@@ -495,7 +527,7 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
       <p class="mquote len" style="display:none">"Promoting health, development and quality of life through technical, ethical and deeply human care."</p>
 <p class="mquote les" style="display:none">"Promover salud, desarrollo y calidad de vida a través de un cuidado técnico, ético y profundamente humano."</p>
       <p style="color:rgba(255,255,255,.45);font-size:.76rem;margin-top:1.2rem;letter-spacing:.1em;text-transform:uppercase;font-weight:400">&mdash; Cristiane Antunes, <span class="lpt-i">Fundadora &amp; RT</span><span class="len-i">Founder &amp; Clinical Director</span><span class="les-i" style="display:none">Fundadora y Directora Clínica</span>
-<span class="les-i">Fundadora y Directora Clínica</span></p>
+<span class="les-i" style="display:none">Fundadora y Directora Clínica</span></p>
     </div>
     <div class="mpils rev">
       <div class="pc"><div class="pn lpt">&#x1F3AF; Resolutividade</div><div class="pn len" style="display:none">&#x1F3AF; Resolution</div><div class="pd lpt">Diagnostico preciso desde o primeiro contato.</div><div class="pd len" style="display:none">Precise diagnosis from the very first contact.</div></div>
@@ -557,7 +589,7 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
     </div>
     <div style="text-align:center;margin-top:2.5rem">
       <a href="especialidades.html" class="bo"><span class="lpt-i">Ver todas as 12 especialidades &rarr;</span><span class="len-i">See all 12 specialties &rarr;</span>
-<span class="les-i">Ver las 12 especialidades &rarr;</span></a>
+<span class="les-i" style="display:none">Ver las 12 especialidades &rarr;</span></a>
     </div>
   </div>
 </section>
@@ -623,9 +655,9 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
       </div>
       <div class="cctas">
         <a href="https://wa.me/5515991829151" class="bw" target="_blank"><span class="lpt-i">&#x1F4AC; Agendar via WhatsApp</span><span class="len-i">&#x1F4AC; Book via WhatsApp</span><span class="les-i" style="display:none">&#x1F4AC; Reservar por WhatsApp</span>
-<span class="les-i">&#x1F4AC; Reservar por WhatsApp</span></a>
+<span class="les-i" style="display:none">&#x1F4AC; Reservar por WhatsApp</span></a>
         <a href="contato.html" class="bg2"><span class="lpt-i">&#x1F4C4; Ver todas as formas de contato</span><span class="len-i">&#x1F4C4; All contact options</span><span class="les-i" style="display:none">&#x1F4C4; Todas las opciones</span>
-<span class="les-i">&#x1F4C4; Todas las opciones</span></a>
+<span class="les-i" style="display:none">&#x1F4C4; Todas las opciones</span></a>
       </div>
     </div>
   </div>
@@ -697,7 +729,22 @@ function setLang(lang,btn){
   document.querySelectorAll('.les-f').forEach(function(e){e.style.display=es?'flex':'none'});
   document.documentElement.lang=es?'es':(en?'en':'pt-BR');
   try{localStorage.setItem('fl_lang',lang)}catch(e){}
+  // Atualiza o texto do botão-gatilho e fecha o menu dropdown
+  var cur=document.getElementById('lang-current');
+  if(cur)cur.textContent=lang.toUpperCase();
+  var wrap=document.getElementById('lang-wrap');
+  if(wrap)wrap.classList.remove('open');
 }
+function toggleLangMenu(){
+  var wrap=document.getElementById('lang-wrap');
+  if(wrap)wrap.classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('lang-wrap');
+  if(wrap && wrap.classList.contains('open') && !wrap.contains(e.target)){
+    wrap.classList.remove('open');
+  }
+});
 window.addEventListener('scroll',function(){
   var n=document.getElementById('nav');
   if(n){if(window.scrollY>50)n.classList.add('scrolled');else n.classList.remove('scrolled')}
