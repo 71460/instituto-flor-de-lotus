@@ -56,4 +56,4 @@ O site é estático (GitHub → hospedagem). Para publicar:
 - [ ] Inserir as 7 fotos (ver `imagens/SOLICITACAO-DE-IMAGENS.md`)
 - [ ] Nome e registro do(a) revisor(a) técnico(a) (p. 2 e p. 30)
 - [ ] Decidir política de licença/distribuição (texto atual: reprodução educacional não comercial com crédito)
-- [ ] Commit + push e link no site
+- [x] Commit + push (`bc24886`, 12/07/2026) e link no site — página `materiais.html` criada, item "Materiais" no menu e rodapé das 6 páginas, sitemap atualizado
