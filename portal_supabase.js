@@ -594,22 +594,44 @@ async function adminLoadMaterials() {
 
   const roleLabel = { parent: '👪 Pais', partner: '🤝 Parceiros', both: '👪🤝 Ambos' };
 
-  list.innerHTML = data.map(mat => `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem 1rem;border:1px solid var(--lb2);border-radius:10px">
+  list.innerHTML = data.map(mat => {
+    const statusColor = mat.published ? '#4CAF50' : '#FF9800';
+    const statusIcon = mat.published ? '✅' : '📝';
+    const statusText = mat.published ? 'Publicado' : 'Rascunho';
+    const hasFile = mat.file_url ? '📎' : '❌';
+    const fileStatus = mat.file_url ? `${hasFile} ${mat.file_size || '?'}` : '❌ Sem arquivo';
+
+    return `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem 1rem;border:2px solid ${statusColor};border-radius:10px;background:${statusColor}08">
       <div style="flex:1">
-        <div style="font-weight:500;font-size:.88rem">${mat.title_pt}</div>
-        <div style="font-size:.75rem;color:var(--txl);margin-top:.2rem">
+        <div style="font-weight:600;font-size:.88rem;display:flex;align-items:center;gap:.5rem">
+          ${mat.title_pt}
+          <span style="background:${statusColor};color:white;padding:.2rem .6rem;border-radius:4px;font-size:.65rem;font-weight:700">${statusIcon} ${statusText}</span>
+        </div>
+        <div style="font-size:.75rem;color:var(--txl);margin-top:.3rem">
           ${mat.category_icon || ''} ${mat.category_name_pt || 'Sem categoria'} &middot;
           ${roleLabel[mat.for_role] || mat.for_role} &middot;
+          ${fileStatus} &middot;
           ${mat.download_count || 0} acessos
-          ${mat.is_new ? ' &middot; <span style="color:#9b87c4">Novo</span>' : ''}
+          ${mat.is_new ? ' &middot; <span style="color:#9b87c4;font-weight:700">🆕 Novo</span>' : ''}
         </div>
       </div>
-      <button class="forum-reply-btn" onclick="adminDeleteMaterial('${mat.id}', '${mat.title_pt.replace(/'/g, "\\'")}')" style="color:#E87EC8;border-color:#E87EC8">
-        &#x1F5D1; Excluir
-      </button>
+      <div style="display:flex;gap:.5rem;flex-direction:column">
+        ${mat.published
+          ? `<button class="forum-reply-btn" onclick="adminTogglePublish('${mat.id}', false, '${mat.title_pt.replace(/'/g, "\\'")}')" style="color:#FF9800;border-color:#FF9800;font-size:.75rem;padding:.4rem .6rem">
+              📝 Despublicar
+            </button>`
+          : `<button class="forum-reply-btn" onclick="adminTogglePublish('${mat.id}', true, '${mat.title_pt.replace(/'/g, "\\'")}')" style="color:#4CAF50;border-color:#4CAF50;font-size:.75rem;padding:.4rem .6rem">
+              ✅ Publicar
+            </button>`
+        }
+        <button class="forum-reply-btn" onclick="adminDeleteMaterial('${mat.id}', '${mat.title_pt.replace(/'/g, "\\'")}')" style="color:#E87EC8;border-color:#E87EC8;font-size:.75rem;padding:.4rem .6rem">
+          🗑️ Excluir
+        </button>
+      </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // ── Excluir material ─────────────────────────────────────────────
@@ -622,6 +644,25 @@ async function adminDeleteMaterial(id, title) {
     alert('Erro ao excluir: ' + error.message);
     return;
   }
+  await adminLoadMaterials();
+}
+
+// ── Publicar/Despublicar material ────────────────────────────
+async function adminTogglePublish(id, publish, title) {
+  const action = publish ? 'publicar' : 'despublicar';
+  if (!confirm(`Tem certeza que deseja ${action} "${title}"?`)) return;
+
+  const { error } = await _sb.from('materials').update({ published: publish }).eq('id', id);
+
+  if (error) {
+    alert(`Erro ao ${action}: ${error.message}`);
+    return;
+  }
+
+  const msg = publish
+    ? `✅ "${title}" publicado com sucesso!`
+    : `📝 "${title}" removido da publicação.`;
+  alert(msg);
   await adminLoadMaterials();
 }
 
