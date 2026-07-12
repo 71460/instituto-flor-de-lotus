@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Programas de treinamento interativos do Instituto Flor de Lótus — e-books, atividades práticas, progresso rastreado. Para famílias e parceiros.">
+<title>Programas de Treinamento | Instituto Flor de Lótus — Portal da Família</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pk:#E87EC8;--pkl:#F5B8E2;--pkd:#C85AA8;
+  --lil:#A99BC4;--lild:#7B87C4;--lilds:#6070B4;
+  --lilbg:#F7F5FC;--lilbg2:#EEE9F8;
+  --tx:#2A2440;--txm:#5A5270;--txl:#9590A8;
+  --ln:rgba(169,155,196,.28);--ok:#4C9E8A;
+  --fd:'Cormorant Garamond',Georgia,serif;--fb:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);font-weight:300;line-height:1.65}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px 60px}
+
+/* HEADER */
+.hd{background:linear-gradient(150deg,#fff 0%,var(--lilbg2) 100%);border-bottom:1px solid var(--ln);padding:24px 20px;margin-bottom:40px;position:sticky;top:0;z-index:50;backdrop-filter:blur(10px)}
+.hd-in{max-width:1000px;margin:0 auto}
+.hd h1{font-family:var(--fd);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:300;line-height:1.15;margin-bottom:6px}
+.hd h1 em{font-style:italic;color:var(--lild)}
+.hd p{color:var(--txm);font-size:.95rem;max-width:600px}
+
+/* HERO */
+.hero{background:linear-gradient(165deg,var(--lilbg) 0%,#fff 50%);border-radius:18px;padding:40px;margin-bottom:50px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(232,126,200,.08),transparent 70%);top:-100px;right:-80px;z-index:0}
+.hero-in{position:relative;z-index:1}
+.hero-tag{display:inline-block;font-size:7pt;letter-spacing:.2em;text-transform:uppercase;color:var(--pkd);font-weight:600;margin-bottom:12px;padding:6px 14px;background:rgba(232,126,200,.1);border-radius:30px}
+.hero h2{font-family:var(--fd);font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:1.15;margin-bottom:16px;color:var(--tx)}
+.hero h2 em{font-style:italic;color:var(--lild)}
+.hero-desc{font-size:1.05rem;color:var(--txm);max-width:580px;line-height:1.75;margin-bottom:28px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 26px;border-radius:50px;font-weight:500;font-size:.92rem;text-decoration:none;transition:all .3s;border:none;cursor:pointer}
+.btn-primary{background:linear-gradient(135deg,var(--pk),var(--lild));color:#fff;box-shadow:0 6px 20px rgba(232,126,200,.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(232,126,200,.4)}
+.btn-secondary{background:#fff;color:var(--lilds);border:1.5px solid var(--lild)}
+.btn-secondary:hover{background:var(--lilbg);transform:translateY(-2px)}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:50px}
+.stat{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:20px;text-align:center}
+.stat-num{font-family:var(--fd);font-size:2rem;font-weight:600;background:linear-gradient(135deg,var(--pk),var(--lild));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:.8rem;color:var(--txm);text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+
+/* SEÇÕES */
+section{margin-bottom:50px}
+.sec-hd{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.sec-icon{font-size:1.8rem}
+.sec-t{font-family:var(--fd);font-size:1.8rem;font-weight:400;color:var(--tx)}
+.sec-t em{color:var(--lild);font-style:italic}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.card{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:22px;transition:all .3s}
+.card:hover{transform:translateY(-4px);border-color:rgba(232,126,200,.35);box-shadow:0 12px 32px rgba(123,135,196,.12)}
+.card-emoji{font-size:2rem;margin-bottom:10px}
+.card h3{font-family:var(--fd);font-size:1.3rem;font-weight:500;color:var(--tx);margin-bottom:8px}
+.card p{font-size:.9rem;color:var(--txm);line-height:1.6}
+
+/* FEATURES */
+.feat-list{display:flex;flex-direction:column;gap:18px}
+.feat{display:flex;gap:16px}
+.feat-check{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--pk),var(--lild));color:#fff;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.feat-body h4{font-weight:600;font-size:.95rem;color:var(--tx);margin-bottom:4px}
+.feat-body p{font-size:.9rem;color:var(--txm)}
+
+/* CTA SECTION */
+.cta-sec{background:linear-gradient(135deg,var(--lilds),var(--lild) 45%,var(--pk));border-radius:18px;padding:40px;color:#fff;text-align:center;position:relative;overflow:hidden}
+.cta-sec::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.08);top:-100px;right:-80px;z-index:0}
+.cta-sec h2{font-family:var(--fd);font-size:1.9rem;font-weight:400;margin-bottom:12px;position:relative;z-index:1}
+.cta-sec p{font-size:1rem;opacity:.95;max-width:500px;margin:0 auto 24px;position:relative;z-index:1}
+.btn-cta{background:#fff;color:var(--lilds);font-weight:600}
+.btn-cta:hover{transform:scale(1.05)}
+
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--ln);padding:20px 0}
+.faq-item:last-child{border-bottom:none}
+.faq-q{font-weight:600;color:var(--tx);font-size:.95rem;cursor:pointer;display:flex;align-items:center;gap:10px}
+.faq-toggle{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--lilbg);border-radius:50%;color:var(--lild);font-weight:600;transition:transform .3s}
+.faq-item.open .faq-toggle{transform:rotate(180deg)}
+.faq-a{color:var(--txm);font-size:.9rem;max-width:600px;margin-top:12px;line-height:1.6;display:none}
+.faq-item.open .faq-a{display:block}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .wrap{padding:0 16px 40px}
+  .hero{padding:28px 18px}
+  .stats{grid-template-columns:1fr 1fr}
+  .cta-sec{padding:28px 18px}
+}
+</style>
+</head>
+<body>
+
+<header class="hd">
+  <div class="hd-in">
+    <h1>Programas de <em>Treinamento</em></h1>
+    <p>Estruturados, interativos e baseados em evidências — para aprender fazendo, no seu ritmo.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <span class="hero-tag">Exclusivo — Pais &amp; Parceiros</span>
+    <h2>Programa TEA na Prática — <em>30 atividades</em></h2>
+    <p class="hero-desc">Transforme o que você aprende em ação. Este programa desdobra as intervenções baseadas em evidências (ABA, TEACCH, PBS) em 30 atividades práticas — cada uma é uma lição curta + uma tarefa no seu contexto real + registro do que você fez. Em ±14 horas, você terá um domínio prático de como funcionam os três pilares do cuidado moderno em TEA.</p>
+    <div class="cta-row">
+      <a href="#" class="btn btn-primary" onclick="alert('Material em breve no seu Portal'); return false">📥 Baixar agora</a>
+      <button class="btn btn-secondary" onclick="document.querySelector('#saiba-mais').scrollIntoView({behavior:'smooth'})">Saiba mais</button>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">30</div>
+      <div class="stat-label">Atividades</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">7</div>
+      <div class="stat-label">Módulos</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">14h</div>
+      <div class="stat-label">De percurso</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Formatos</div>
+    </div>
+  </div>
+
+  <section id="saiba-mais">
+    <div class="sec-hd"><span class="sec-icon">📚</span><h2 class="sec-t">O que você vai receber</h2></div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-emoji">📖</div>
+        <h3>E-book de leitura</h3>
+        <p>30 páginas A4, fundamentação completa — de onde cada atividade vem, qual é a evidência, como funciona na prática.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">🖨️</div>
+        <h3>Caderno imprimível</h3>
+        <p>34 páginas — 30 fichas com espaço de registro, mapa de progresso para marcar à mão, certificado de conclusão.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">💻</div>
+        <h3>Versão digital interativa</h3>
+        <p>Abra no navegador ou celular. Marca as atividades conforme faz — barra de progresso é salva no seu dispositivo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-hd"><span class="sec-icon">🎯</span><h2 class="sec-t">Pra quem é</h2></div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-emoji">👨‍👩‍👧</div>
+        <h3>Famílias</h3>
+        <p>Entenda as intervenções que sua equipe usa, participe das decisões, leve conhecimento para casa.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">🧑‍🏫</div>
+        <h3>Educadores</h3>
+        <p>Sala estruturada, rotina visual, estratégias que funcionam — aplicáveis hoje mesmo na sua prática.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">🩺</div>
+        <h3>Parceiros</h3>
+        <p>Terapeutas, fonoaudiólogos, TO — atualize conhecimento, discuta com a equipe, eleve a qualidade.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-hd"><span class="sec-icon">⚡</span><h2 class="sec-t">Como funciona</h2></div>
+    <div class="feat-list">
+      <div class="feat">
+        <div class="feat-check">1</div>
+        <div class="feat-body">
+          <h4>Baixe o pacote (ZIP completo)</h4>
+          <p>Três arquivos juntos: e-book PDF, caderno PDF, versão digital HTML. Funciona offline.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-check">2</div>
+        <div class="feat-body">
+          <h4>Escolha seu formato</h4>
+          <p>Leia o e-book, imprima o caderno, ou abra no navegador/celular — ou tudo junto. Conforme o ritmo.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-check">3</div>
+        <div class="feat-body">
+          <h4>Faça 2–3 atividades por semana</h4>
+          <p>Cada atividade: ler o fundamento (5–10 min) → fazer a tarefa prática (15–30 min) → registrar o que aprendeu.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-check">4</div>
+        <div class="feat-body">
+          <h4>Acompanhe seu progresso</h4>
+          <p>Digitalmente: barra atualiza conforme você marca. No impresso: você preenche o mapa. Certificado ao final.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-hd"><span class="sec-icon">✨</span><h2 class="sec-t">Por que este programa</h2></div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-emoji">🔬</div>
+        <h3>Baseado em evidências</h3>
+        <p>Estruturado no modelo Caregiver Skills Training (CST) da OMS — metodologia comprovada em treinamento de cuidadores.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">🎓</div>
+        <h3>Aprender fazendo</h3>
+        <p>Não é só leitura. Cada atividade vira ação no seu contexto real — casa, escola, clínica.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">📊</div>
+        <h3>Progresso visível</h3>
+        <p>Você marca, vê a barra subir, sente a progressão — motivação incorporada.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">📱</div>
+        <h3>Seu jeito</h3>
+        <p>Digital ou impresso, rápido ou lento, sozinho ou com a equipe — você escolhe o formato.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-hd"><span class="sec-icon">❓</span><h2 class="sec-t">Perguntas frequentes</h2></div>
+    <div id="faq">
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q"><span class="faq-toggle">▼</span> Quanto tempo leva pra completar?</div>
+        <div class="faq-a">O programa tem ±14 horas no total. Recomendamos 2–3 atividades por semana, o que significa 10–15 semanas no ritmo confortável. Mas você escolhe — pode ir mais rápido ou mais lento.</div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q"><span class="faq-toggle">▼</span> Preciso de internet?</div>
+        <div class="faq-a">Não. O pacote baixado (ZIP) funciona 100% offline — e-book em PDF, caderno em PDF, versão digital em HTML. Seu progresso fica salvo no seu dispositivo.</div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q"><span class="faq-toggle">▼</span> Posso imprimir tudo?</div>
+        <div class="faq-a">Sim! A versão impressa foi desenhada pra A4 (34 páginas). Imprima e use como um caderno: marque o progresso à mão, escreva na frente das atividades.</div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q"><span class="faq-toggle">▼</span> E se eu terminar antes de 15 semanas?</div>
+        <div class="faq-a">Parabéns! Na última atividade há um certificado de conclusão que você preenche. Compartilhe com sua equipe ou guarde como registro de desenvolvimento profissional contínuo.</div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q"><span class="faq-toggle">▼</span> Vem com suporte?</div>
+        <div class="faq-a">O material é autoinstrucional, mas dúvidas você leva pra sua equipe ou pro Instituto: (15) 99182-9151 · www.institutoflordelotus.com.br.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-sec">
+    <h2>Pronto para começar?</h2>
+    <p>O programa estará disponível no seu Portal em breve, na área de materiais para pais e parceiros. Fique de olho! 🌟</p>
+    <button class="btn btn-cta" onclick="alert('Você será notificado quando o material estiver disponível.')">Avisem-me quando sair</button>
+  </section>
+
+</div>
+
+<script>
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
+  e.preventDefault();
+  document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'});
+}));
+</script>
+
+</body>
+</html>
