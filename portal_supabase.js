@@ -35,7 +35,7 @@ async function doLoginReal() {
     if (error) throw error;
 
     // Buscar perfil do usuário
-    const { data: profile } = await supabase
+    const { data: profile } = await _sb
       .from('profiles')
       .select('*')
       .eq('id', data.user.id)
@@ -234,7 +234,7 @@ function showSignupSuccess(msg) {
 async function loadParentDashboard(userId) {
   try {
     // Buscar paciente da família
-    const { data: familyData } = await supabase
+    const { data: familyData } = await _sb
       .from('family_members')
       .select('family_id')
       .eq('user_id', userId)
@@ -242,7 +242,7 @@ async function loadParentDashboard(userId) {
 
     if (!familyData) return;
 
-    const { data: patients } = await supabase
+    const { data: patients } = await _sb
       .from('patients')
       .select('*')
       .eq('family_id', familyData.family_id);
@@ -274,7 +274,7 @@ async function loadMaterials(role) {
 
   const lang = localStorage.getItem('fl_lang') || 'pt';
 
-  const { data: materials, error } = await supabase
+  const { data: materials, error } = await _sb
     .from('materials_with_category')
     .select('*')
     .or(`for_role.eq.${role},for_role.eq.both`)
@@ -339,7 +339,7 @@ async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
   if (!user) return;
 
   // Descobrir o role do usuário para saber qual bucket usar
-  const { data: profile } = await supabase
+  const { data: profile } = await _sb
     .from('profiles').select('role').eq('id', user.id).single();
   const bucket = profile?.role === 'partner' ? 'materiais-parceiros' : 'materiais-pais';
 
@@ -373,7 +373,7 @@ async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
 // ══════════════════════════════════════════════════════════════════
 
 async function loadAppointments(patientId) {
-  const { data: appts } = await supabase
+  const { data: appts } = await _sb
     .from('appointments')
     .select('*')
     .eq('patient_id', patientId)
@@ -412,7 +412,7 @@ async function loadAppointments(patientId) {
 // ══════════════════════════════════════════════════════════════════
 
 async function loadProgress(patientId) {
-  const { data: lastRound } = await supabase
+  const { data: lastRound } = await _sb
     .from('rounds')
     .select('goals, pts_summary, held_at')
     .eq('patient_id', patientId)
@@ -473,7 +473,7 @@ async function checkExistingSession() {
   const { data: { session } } = await _sb.auth.getSession();
   if (!session) return;
 
-  const { data: profile } = await supabase
+  const { data: profile } = await _sb
     .from('profiles')
     .select('*')
     .eq('id', session.user.id)
@@ -556,7 +556,7 @@ async function adminLoadCategories() {
   const sel = document.getElementById('admin-mat-category');
   if (!sel) return;
 
-  const { data, error } = await supabase
+  const { data, error } = await _sb
     .from('material_categories')
     .select('*')
     .order('name_pt');
@@ -577,7 +577,7 @@ async function adminLoadMaterials() {
   if (!list) return;
   list.innerHTML = '<p style="color:var(--txl);font-size:.85rem">Carregando...</p>';
 
-  const { data, error } = await supabase
+  const { data, error } = await _sb
     .from('materials_with_category')
     .select('*')
     .order('created_at', { ascending: false });
@@ -736,7 +736,7 @@ async function adminLoadPartners() {
   if (!list) return;
   list.innerHTML = '<p style="color:var(--txl);font-size:.85rem">Carregando...</p>';
 
-  const { data, error } = await supabase
+  const { data, error } = await _sb
     .from('partners')
     .select('*, profiles:user_id(full_name)')
     .order('created_at', { ascending: false });
