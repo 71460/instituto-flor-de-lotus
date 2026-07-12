@@ -669,15 +669,21 @@ async function adminUploadMaterial() {
     let fileUrl = linkUrl;
     let fileSizeLabel = null;
 
-    // Se houver arquivo real, fazer upload para o Storage
+    // Se houver arquivo real, fazer upload para o Storage.
+    // Material "both" precisa existir nos DOIS buckets: downloadMaterial()
+    // busca no bucket correspondente ao papel de quem baixa (pais ou parceiros).
     if (fileType !== 'link') {
       const file = fileInput.files[0];
-      const bucket = (forRole === 'partner') ? 'materiais-parceiros' : 'materiais-pais';
+      const buckets = (forRole === 'both')
+        ? ['materiais-pais', 'materiais-parceiros']
+        : [(forRole === 'partner') ? 'materiais-parceiros' : 'materiais-pais'];
       const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
       const path = `${Date.now()}_${safeName}`;
 
-      const { error: upErr } = await _sb.storage.from(bucket).upload(path, file);
-      if (upErr) throw upErr;
+      for (const bucket of buckets) {
+        const { error: upErr } = await _sb.storage.from(bucket).upload(path, file);
+        if (upErr) throw upErr;
+      }
 
       fileUrl = path;
       fileSizeLabel = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
