@@ -1,0 +1,13 @@
+{
+  "name": "instituto-flor-de-lotus",
+  "version": "1.0.0",
+  "description": "Portal e materiais educativos para Flor de Lótus",
+  "main": "index.js",
+  "scripts": {
+    "publish": "node materiais/programa-tea/publish.js",
+    "create-users": "node create-users.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3"
+  }
+}

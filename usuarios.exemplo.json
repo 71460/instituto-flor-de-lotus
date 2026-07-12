@@ -1,0 +1,26 @@
+[
+  {
+    "email": "pai.teste@flordeLotus.com.br",
+    "password": "SenhaSegura123!",
+    "name": "João Silva (Responsável)",
+    "role": "parent"
+  },
+  {
+    "email": "mae.teste@flordeLotus.com.br",
+    "password": "SenhaSegura456!",
+    "name": "Maria Silva (Responsável)",
+    "role": "parent"
+  },
+  {
+    "email": "terapeuta.teste@flordeLotus.com.br",
+    "password": "SenhaSegura789!",
+    "name": "Dr. Carlos Oliveira (Terapeuta)",
+    "role": "partner"
+  },
+  {
+    "email": "coordenador.teste@flordeLotus.com.br",
+    "password": "SenhaSegura012!",
+    "name": "Dra. Ana Costa (Coordenadora)",
+    "role": "partner"
+  }
+]
