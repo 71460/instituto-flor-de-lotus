@@ -305,6 +305,17 @@ async function loadMaterials(role) {
       const escola = materials.filter(mat => mat.category_slug === 'escola');
       renderMaterialsGrid(escolaEl, escola, lang, 'Nenhum kit escolar disponível no momento.');
     }
+
+    const statEscolaEl = document.getElementById('stat-partners-escola');
+    if (statEscolaEl) statEscolaEl.textContent = materials.filter(mat => mat.category_slug === 'escola').length;
+  }
+
+  if (role === 'parent') {
+    const statNewEl = document.getElementById('stat-parents-new');
+    if (statNewEl) statNewEl.textContent = materials.filter(mat => mat.is_new).length;
+
+    const statVideosEl = document.getElementById('stat-parents-videos');
+    if (statVideosEl) statVideosEl.textContent = materials.filter(mat => mat.file_type === 'video').length;
   }
 
   // Atualizar contador no stat-box
