@@ -298,6 +298,15 @@ async function loadMaterials(role) {
     }
   }
 
+  // Aba "Kit Escola" — mesmo conjunto, filtrado pela categoria 'escola'
+  if (role === 'partner') {
+    const escolaEl = document.getElementById('partners-tab-escola');
+    if (escolaEl) {
+      const escola = materials.filter(mat => mat.category_slug === 'escola');
+      renderMaterialsGrid(escolaEl, escola, lang, 'Nenhum kit escolar disponível no momento.');
+    }
+  }
+
   // Atualizar contador no stat-box
   const statEl = document.querySelector('#dash-' + role + 's .stat-box-num');
   if (statEl) statEl.textContent = materials.length;
