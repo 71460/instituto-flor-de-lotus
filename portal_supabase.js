@@ -287,50 +287,68 @@ async function loadMaterials(role) {
 
   if (error || !materials) return;
 
+  renderMaterialsGrid(gridEl, materials, lang);
+
+  // Aba "Atividades em Casa" — mesmo conjunto, filtrado pela categoria 'atividades'
+  if (role === 'parent') {
+    const atividadesEl = document.getElementById('parents-tab-atividades');
+    if (atividadesEl) {
+      const atividades = materials.filter(mat => mat.category_slug === 'atividades');
+      renderMaterialsGrid(atividadesEl, atividades, lang, 'Nenhuma atividade disponível no momento.');
+    }
+  }
+
+  // Atualizar contador no stat-box
+  const statEl = document.querySelector('#dash-' + role + 's .stat-box-num');
+  if (statEl) statEl.textContent = materials.length;
+}
+
+function renderMaterialsGrid(gridEl, materials, lang, emptyMsg) {
   const grid = document.createElement('div');
   grid.className = 'materials-grid';
 
-  materials.forEach(mat => {
-    const title = lang === 'en' ? (mat.title_en || mat.title_pt)
-                : lang === 'es' ? (mat.title_es || mat.title_pt)
-                : mat.title_pt;
+  if (materials.length === 0) {
+    grid.innerHTML = `<p style="color:var(--txl);font-size:.9rem;grid-column:1/-1;text-align:center;padding:2rem">${emptyMsg || 'Nenhum material disponível no momento.'}</p>`;
+  } else {
+    materials.forEach(mat => grid.appendChild(buildMaterialCard(mat, lang)));
+  }
 
-    const desc  = lang === 'en' ? (mat.desc_en  || mat.desc_pt)
-                : lang === 'es' ? (mat.desc_es  || mat.desc_pt)
-                : mat.desc_pt;
-
-    const icon = mat.file_type === 'video' ? '🎬'
-               : mat.file_type === 'doc'   ? '📄'
-               : '📋';
-
-    const actionLabel = mat.file_type === 'video' ? '▶ Assistir' : '⬇ Baixar';
-
-    const card = document.createElement('div');
-    card.className = 'mat-card';
-    card.innerHTML = `
-      ${mat.is_new ? '<span class="mat-new">Novo</span>' : ''}
-      <span class="mat-category cat-${mat.category_slug || 'orientacao'}">${mat.category_name_pt || ''}</span>
-      <span class="mat-icon">${icon}</span>
-      <h3 class="mat-title">${title}</h3>
-      <p class="mat-desc">${desc || ''}</p>
-      <div class="mat-meta">
-        <span class="mat-tag">${mat.file_type?.toUpperCase() || 'PDF'}${mat.file_size ? ' · ' + mat.file_size : ''}${mat.duration ? ' · ' + mat.duration : ''}</span>
-        <button class="mat-download" onclick="downloadMaterial('${mat.id}','${mat.file_url || ''}','${mat.file_type}', this)">${actionLabel}</button>
-      </div>`;
-    grid.appendChild(card);
-  });
-
-  // Substituir grid existente
   const existingGrid = gridEl.querySelector('.materials-grid');
   if (existingGrid) {
     gridEl.replaceChild(grid, existingGrid);
   } else {
     gridEl.appendChild(grid);
   }
+}
 
-  // Atualizar contador no stat-box
-  const statEl = document.querySelector('#dash-' + role + 's .stat-box-num');
-  if (statEl) statEl.textContent = materials.length;
+function buildMaterialCard(mat, lang) {
+  const title = lang === 'en' ? (mat.title_en || mat.title_pt)
+              : lang === 'es' ? (mat.title_es || mat.title_pt)
+              : mat.title_pt;
+
+  const desc  = lang === 'en' ? (mat.desc_en  || mat.desc_pt)
+              : lang === 'es' ? (mat.desc_es  || mat.desc_pt)
+              : mat.desc_pt;
+
+  const icon = mat.file_type === 'video' ? '🎬'
+             : mat.file_type === 'doc'   ? '📄'
+             : '📋';
+
+  const actionLabel = mat.file_type === 'video' ? '▶ Assistir' : '⬇ Baixar';
+
+  const card = document.createElement('div');
+  card.className = 'mat-card';
+  card.innerHTML = `
+    ${mat.is_new ? '<span class="mat-new">Novo</span>' : ''}
+    <span class="mat-category cat-${mat.category_slug || 'orientacao'}">${mat.category_name_pt || ''}</span>
+    <span class="mat-icon">${icon}</span>
+    <h3 class="mat-title">${title}</h3>
+    <p class="mat-desc">${desc || ''}</p>
+    <div class="mat-meta">
+      <span class="mat-tag">${mat.file_type?.toUpperCase() || 'PDF'}${mat.file_size ? ' · ' + mat.file_size : ''}${mat.duration ? ' · ' + mat.duration : ''}</span>
+      <button class="mat-download" onclick="downloadMaterial('${mat.id}','${mat.file_url || ''}','${mat.file_type}', this)">${actionLabel}</button>
+    </div>`;
+  return card;
 }
 
 // ══════════════════════════════════════════════════════════════════
