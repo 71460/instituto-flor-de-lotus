@@ -232,8 +232,15 @@ function showSignupSuccess(msg) {
 // ══════════════════════════════════════════════════════════════════
 
 async function loadParentDashboard(userId) {
+  // Materiais não dependem de vínculo familiar — carregam sempre.
   try {
-    // Buscar paciente da família
+    await loadMaterials('parent');
+  } catch (err) {
+    console.error('Erro ao carregar materiais:', err);
+  }
+
+  // Agenda e progresso são específicos do paciente — só carregam se houver vínculo.
+  try {
     const { data: familyData } = await _sb
       .from('family_members')
       .select('family_id')
@@ -247,17 +254,13 @@ async function loadParentDashboard(userId) {
       .select('*')
       .eq('family_id', familyData.family_id);
 
-    // Carregar materiais disponíveis para pais
-    await loadMaterials('parent');
-
-    // Carregar agendamentos
     if (patients && patients.length > 0) {
       await loadAppointments(patients[0].id);
       await loadProgress(patients[0].id);
     }
 
   } catch (err) {
-    console.error('Erro ao carregar dashboard:', err);
+    console.error('Erro ao carregar dashboard (agenda/progresso):', err);
   }
 }
 
@@ -335,8 +338,13 @@ async function loadMaterials(role) {
 // ══════════════════════════════════════════════════════════════════
 
 async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
+  // Abre a aba em branco já no clique (gesto síncrono do usuário), para não
+  // ser bloqueada como pop-up depois dos awaits abaixo. Navega para a URL
+  // real assim que ela ficar pronta.
+  const newTab = window.open('', '_blank');
+
   const { data: { user } } = await _sb.auth.getUser();
-  if (!user) return;
+  if (!user) { if (newTab) newTab.close(); return; }
 
   // Descobrir o role do usuário para saber qual bucket usar
   const { data: profile } = await _sb
@@ -353,18 +361,26 @@ async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
   // Incrementar contador
   await _sb.rpc('increment_download', { mat_id: materialId });
 
-  // Se tiver URL real, abrir; senão mostrar "em breve"
   if (fileUrl && fileUrl.startsWith('http')) {
+    // Link externo (ex: YouTube) — abre direto.
+    if (newTab) newTab.location.href = fileUrl; else window.open(fileUrl, '_blank');
+    return;
+  }
+
+  if (fileUrl) {
+    // Caminho relativo dentro do bucket — gera URL assinada.
     const { data } = await _sb.storage
       .from(bucket)
       .createSignedUrl(fileUrl, 3600); // URL válida por 1 hora
     if (data?.signedUrl) {
-      window.open(data.signedUrl, '_blank');
+      if (newTab) newTab.location.href = data.signedUrl; else window.open(data.signedUrl, '_blank');
       return;
     }
   }
 
-  // Fallback para demo
+  if (newTab) newTab.close();
+
+  // Sem arquivo cadastrado ainda — mostra "em breve"
   if (btnEl) dlMat(btnEl);
 }
 
