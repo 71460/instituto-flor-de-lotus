@@ -454,6 +454,7 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
 @media(max-width:900px){.pg-3{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.pg-3{grid-template-columns:1fr}}
 </style>
+<script src="supabase-lib.min.js"></script>
 </head>
 <body>
 <div id="topbar">
@@ -598,24 +599,24 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
               <div class="form-group">
                 <label class="form-label lpt">Nome completo *</label>
                 <label class="form-label len" style="display:none">Full name *</label>
-                <input type="text" class="form-input" placeholder="Seu nome" required>
+                <input type="text" id="cf-nome" class="form-input" placeholder="Seu nome" required>
               </div>
               <div class="form-group">
                 <label class="form-label lpt">Telefone / WhatsApp *</label>
                 <label class="form-label len" style="display:none">Phone / WhatsApp *</label>
-                <input type="tel" class="form-input" placeholder="(15) 99999-9999" required>
+                <input type="tel" id="cf-telefone" class="form-input" placeholder="(15) 99999-9999" required>
               </div>
             </div>
             <div class="form-group">
               <label class="form-label lpt">E-mail</label>
               <label class="form-label len" style="display:none">Email</label>
-              <input type="email" class="form-input" placeholder="seu@email.com">
+              <input type="email" id="cf-email" class="form-input" placeholder="seu@email.com">
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label lpt">Especialidade de interesse *</label>
                 <label class="form-label len" style="display:none">Specialty of interest *</label>
-                <select class="form-select form-input" required>
+                <select id="cf-especialidade" class="form-select form-input" required>
                   <option value="" class="lpt">Selecione...</option>
                   <option value="" class="len" style="display:none">Select...</option>
                   <option value="psicologia">Psicologia</option>
@@ -640,7 +641,7 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
               <div class="form-group">
                 <label class="form-label lpt">Idade do paciente</label>
                 <label class="form-label len" style="display:none">Patient's age</label>
-                <select class="form-select form-input">
+                <select id="cf-idade" class="form-select form-input">
                   <option class="lpt">Selecione...</option>
                   <option class="len" style="display:none">Select...</option>
                   <option class="lpt">0 a 3 anos</option><option class="len" style="display:none">0 to 3 years</option>
@@ -654,7 +655,7 @@ footer{background:#1A1428;color:rgba(255,255,255,.45);padding:4rem 2rem 2rem}
             <div class="form-group">
               <label class="form-label lpt">Mensagem / Como podemos ajudar?</label>
               <label class="form-label len" style="display:none">Message / How can we help?</label>
-              <textarea class="form-textarea" placeholder="Descreva brevemente a situacao ou sua duvida..."></textarea>
+              <textarea id="cf-mensagem" class="form-textarea" placeholder="Descreva brevemente a situacao ou sua duvida..."></textarea>
             </div>
             <div style="margin-bottom:1.2rem">
               <p style="font-size:.78rem;font-weight:500;color:var(--txm);margin-bottom:.7rem" class="lpt">Como voce nos conheceu?</p>
@@ -833,13 +834,50 @@ function toggleMenu(){document.getElementById('nav-links').classList.toggle('ope
 })();
 </script>
 <script>
-document.getElementById('contact-form').addEventListener('submit',function(e){
+var _sbContact = window.supabase.createClient(
+  'https://imerhiewjfmtzwpqyhcz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZXJoaWV3amZtdHp3cHF5aGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NTQxNzgsImV4cCI6MjA5NzMzMDE3OH0.QtM8FRrHdatXVUTVPMAyFWexFklq_aWn4e3MGltHGTE'
+);
+
+document.getElementById('contact-form').addEventListener('submit', async function(e){
   e.preventDefault();
-  var btn=document.getElementById('submit-btn');
-  btn.textContent='Enviando...';btn.disabled=true;
-  setTimeout(function(){
-    document.getElementById('contact-form').innerHTML='<div style="text-align:center;padding:3rem 1rem"><div style="font-size:3rem;margin-bottom:1rem">&#x2728;</div><h3 style="font-family:var(--fd);font-size:1.8rem;font-weight:400;color:var(--tx);margin-bottom:.8rem">Mensagem enviada!</h3><p style="color:var(--txm);font-weight:300">Nossa equipe entrara em contato em breve. Voce tambem pode nos chamar diretamente pelo WhatsApp.</p><a href="https://wa.me/5515991829151" class="bp" style="display:inline-flex;margin-top:1.5rem" target="_blank">&#x1F4AC; Ir para WhatsApp</a></div>';
-  },1200);
+  var btn = document.getElementById('submit-btn');
+  var originalBtnHtml = btn.innerHTML;
+  btn.textContent = 'Enviando...';
+  btn.disabled = true;
+
+  var especialidadeSel = document.getElementById('cf-especialidade');
+  var idadeSel = document.getElementById('cf-idade');
+  var origemChecked = document.querySelector('input[name="origem"]:checked');
+
+  var payload = {
+    nome: document.getElementById('cf-nome').value.trim(),
+    telefone: document.getElementById('cf-telefone').value.trim(),
+    email: document.getElementById('cf-email').value.trim() || null,
+    especialidade: especialidadeSel.value || null,
+    idade_paciente: idadeSel.options[idadeSel.selectedIndex] ? idadeSel.options[idadeSel.selectedIndex].text : null,
+    mensagem: document.getElementById('cf-mensagem').value.trim() || null,
+    como_conheceu: origemChecked ? origemChecked.nextElementSibling.textContent : null
+  };
+
+  try {
+    var result = await _sbContact.from('contact_messages').insert(payload);
+    if (result.error) throw result.error;
+
+    document.getElementById('contact-form').innerHTML = '<div style="text-align:center;padding:3rem 1rem"><div style="font-size:3rem;margin-bottom:1rem">&#x2728;</div><h3 style="font-family:var(--fd);font-size:1.8rem;font-weight:400;color:var(--tx);margin-bottom:.8rem">Mensagem enviada!</h3><p style="color:var(--txm);font-weight:300">Nossa equipe entrara em contato em breve. Voce tambem pode nos chamar diretamente pelo WhatsApp.</p><a href="https://wa.me/5515991829151" class="bp" style="display:inline-flex;margin-top:1.5rem" target="_blank">&#x1F4AC; Ir para WhatsApp</a></div>';
+  } catch (err) {
+    console.error('Erro ao enviar mensagem de contato:', err);
+    btn.innerHTML = originalBtnHtml;
+    btn.disabled = false;
+    var errEl = document.getElementById('contact-form-error');
+    if (!errEl) {
+      errEl = document.createElement('p');
+      errEl.id = 'contact-form-error';
+      errEl.style.cssText = 'color:#C8388C;font-size:.85rem;text-align:center;margin-top:.8rem';
+      btn.insertAdjacentElement('afterend', errEl);
+    }
+    errEl.textContent = 'Nao foi possivel enviar agora. Tente novamente ou fale conosco pelo WhatsApp.';
+  }
 });
 </script>
 <script>

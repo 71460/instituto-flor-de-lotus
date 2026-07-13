@@ -704,6 +704,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
     <button class="tab-btn active" onclick="switchTab('admin','materiais',this)">&#x1F4DA; Materiais</button>
     <button class="tab-btn" onclick="switchTab('admin','novo',this)">&#x2795; Novo Material</button>
     <button class="tab-btn" onclick="switchTab('admin','parceiros',this)">&#x1F91D; Parceiros</button>
+    <button class="tab-btn" onclick="switchTab('admin','mensagens',this)">&#x2709;&#xFE0F; Mensagens</button>
   </div>
 
   <!-- ABA: LISTA DE MATERIAIS -->
@@ -814,6 +815,18 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
       </div>
       <div id="admin-partners-list" style="display:flex;flex-direction:column;gap:.6rem">
         <p style="color:var(--txl);font-size:.85rem">Carregando parceiros...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="admin-tab-mensagens">
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3 class="dash-card-title">&#x2709;&#xFE0F; Mensagens de Contato</h3>
+        <button class="forum-reply-btn" onclick="adminLoadMessages()">&#x21BB; Atualizar lista</button>
+      </div>
+      <div id="admin-messages-list" style="display:flex;flex-direction:column;gap:.6rem">
+        <p style="color:var(--txl);font-size:.85rem">Carregando mensagens...</p>
       </div>
     </div>
   </div>

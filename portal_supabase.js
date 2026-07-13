@@ -76,7 +76,7 @@ async function doLoginReal() {
     } else if (profile.role === 'admin' || profile.role === 'staff') {
       await adminLoadCategories();
       await adminLoadMaterials();
-      if (profile.role === 'admin') await adminLoadPartners();
+      if (profile.role === 'admin') { await adminLoadPartners(); await adminLoadMessages(); }
     }
 
     // Mostrar nome do usuário + botão Sair na barra de navegação
@@ -563,7 +563,7 @@ async function checkExistingSession() {
   } else if (profile.role === 'admin' || profile.role === 'staff') {
     await adminLoadCategories();
     await adminLoadMaterials();
-    if (profile.role === 'admin') await adminLoadPartners();
+    if (profile.role === 'admin') { await adminLoadPartners(); await adminLoadMessages(); }
   }
 
   showNavUserBadge(profile.full_name);
@@ -874,12 +874,69 @@ async function adminTogglePartner(id, newActiveState) {
   await adminLoadPartners();
 }
 
-window.adminLoadCategories  = adminLoadCategories;
-window.adminLoadMaterials   = adminLoadMaterials;
-window.adminDeleteMaterial  = adminDeleteMaterial;
-window.adminUploadMaterial  = adminUploadMaterial;
-window.adminLoadPartners    = adminLoadPartners;
-window.adminTogglePartner   = adminTogglePartner;
+// ── Mensagens de contato (vindas de contato.html) ──────────────────
+async function adminLoadMessages() {
+  const list = document.getElementById('admin-messages-list');
+  if (!list) return;
+  list.innerHTML = '<p style="color:var(--txl);font-size:.85rem">Carregando...</p>';
+
+  const { data, error } = await _sb
+    .from('contact_messages')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    list.innerHTML = `<p style="color:#E87EC8;font-size:.85rem">Erro ao carregar: ${error.message}</p>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    list.innerHTML = '<p style="color:var(--txl);font-size:.85rem">Nenhuma mensagem recebida ainda.</p>';
+    return;
+  }
+
+  list.innerHTML = data.map(m => {
+    const statusColor = m.respondido ? '#4CAF50' : '#FF9800';
+    const statusText = m.respondido ? '✅ Respondida' : '📩 Pendente';
+    const dataFmt = m.created_at ? new Date(m.created_at).toLocaleString('pt-BR') : '';
+    return `
+    <div style="padding:.9rem 1rem;border:2px solid ${statusColor};border-radius:10px;background:${statusColor}08">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div style="font-weight:600;font-size:.9rem">${m.nome || '(sem nome)'}</div>
+        <span style="background:${statusColor};color:white;padding:.2rem .6rem;border-radius:4px;font-size:.65rem;font-weight:700">${statusText}</span>
+      </div>
+      <div style="font-size:.78rem;color:var(--txl);margin-top:.3rem">
+        ${dataFmt} &middot; ${m.telefone || '—'}${m.email ? ' &middot; ' + m.email : ''}
+        ${m.especialidade ? ' &middot; ' + m.especialidade : ''}${m.idade_paciente ? ' &middot; ' + m.idade_paciente : ''}
+      </div>
+      ${m.mensagem ? `<div style="font-size:.85rem;margin-top:.5rem;color:var(--tx)">${m.mensagem}</div>` : ''}
+      <div style="margin-top:.6rem">
+        <button class="forum-reply-btn" onclick="adminToggleMessageStatus('${m.id}', ${!m.respondido})">
+          ${m.respondido ? 'Marcar como pendente' : 'Marcar como respondida'}
+        </button>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+async function adminToggleMessageStatus(id, newState) {
+  const { error } = await _sb.from('contact_messages').update({ respondido: newState }).eq('id', id);
+  if (error) {
+    alert('Erro: ' + error.message);
+    return;
+  }
+  await adminLoadMessages();
+}
+
+window.adminLoadCategories       = adminLoadCategories;
+window.adminLoadMaterials        = adminLoadMaterials;
+window.adminDeleteMaterial       = adminDeleteMaterial;
+window.adminUploadMaterial       = adminUploadMaterial;
+window.adminLoadPartners         = adminLoadPartners;
+window.adminTogglePartner        = adminTogglePartner;
+window.adminLoadMessages         = adminLoadMessages;
+window.adminToggleMessageStatus  = adminToggleMessageStatus;
 
 // ══════════════════════════════════════════════════════════════════
 // BADGE DE USUÁRIO NA NAVBAR — mostra nome + botão Sair sempre visível
