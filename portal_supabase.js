@@ -376,10 +376,11 @@ function buildMaterialCard(mat, lang) {
 // ══════════════════════════════════════════════════════════════════
 
 async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
-  // Abre a aba em branco já no clique (gesto síncrono do usuário), para não
-  // ser bloqueada como pop-up depois dos awaits abaixo. Navega para a URL
-  // real assim que ela ficar pronta.
-  const newTab = window.open('', '_blank');
+  // Link externo e vídeo abrem em ABA; os demais tipos BAIXAM o arquivo.
+  // Para os que abrem em aba, ela é criada já no clique (gesto síncrono),
+  // senão o navegador bloqueia como pop-up depois dos awaits.
+  const opensInTab = fileType === 'video' || (fileUrl && fileUrl.startsWith('http'));
+  const newTab = opensInTab ? window.open('', '_blank') : null;
 
   const { data: { user } } = await _sb.auth.getUser();
   if (!user) { if (newTab) newTab.close(); return; }
@@ -406,12 +407,21 @@ async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
   }
 
   if (fileUrl) {
-    // Caminho relativo dentro do bucket — gera URL assinada.
+    // Caminho relativo dentro do bucket — gera URL assinada (válida 1h).
     const { data } = await _sb.storage
       .from(bucket)
-      .createSignedUrl(fileUrl, 3600); // URL válida por 1 hora
+      .createSignedUrl(fileUrl, 3600);
     if (data?.signedUrl) {
-      if (newTab) newTab.location.href = data.signedUrl; else window.open(data.signedUrl, '_blank');
+      if (opensInTab) {
+        if (newTab) newTab.location.href = data.signedUrl; else window.open(data.signedUrl, '_blank');
+      } else {
+        // Baixa com nome amigável (sem o prefixo de timestamp do storage).
+        // O parâmetro download faz o storage responder com
+        // Content-Disposition: attachment — o navegador salva o arquivo
+        // sem sair da página.
+        const niceName = fileUrl.replace(/^\d+_/, '');
+        window.location.href = data.signedUrl + '&download=' + encodeURIComponent(niceName);
+      }
       return;
     }
   }
@@ -776,7 +786,11 @@ async function adminUploadMaterial() {
       const path = `${Date.now()}_${safeName}`;
 
       for (const bucket of buckets) {
-        const { error: upErr } = await _sb.storage.from(bucket).upload(path, file);
+        // Sem contentType explícito o supabase-js grava tudo como
+        // text/plain — o arquivo baixa/abre errado depois.
+        const { error: upErr } = await _sb.storage.from(bucket).upload(path, file, {
+          contentType: file.type || 'application/octet-stream'
+        });
         if (upErr) throw upErr;
       }
 
