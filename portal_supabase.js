@@ -943,6 +943,45 @@ async function adminToggleMessageStatus(id, newState) {
   await adminLoadMessages();
 }
 
+// ── Pré-visualização de Pais/Parceiros a partir do painel admin ────
+// Deixa uma única conta admin ver as duas áreas sem precisar de
+// contas separadas (cada login normal continua preso a um papel só).
+async function adminPreviewDashboard(role) {
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) return;
+
+  document.getElementById('dash-admin').classList.remove('open');
+
+  if (role === 'parents') {
+    document.getElementById('dash-parents').classList.add('open');
+    document.getElementById('back-to-admin-parents').style.display = '';
+    await loadParentDashboard(user.id);
+  } else {
+    document.getElementById('dash-partners').classList.add('open');
+    document.getElementById('back-to-admin-partners').style.display = '';
+    await loadPartnerDashboard(user.id);
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function adminExitPreview() {
+  document.getElementById('dash-parents').classList.remove('open');
+  document.getElementById('dash-partners').classList.remove('open');
+  document.getElementById('back-to-admin-parents').style.display = 'none';
+  document.getElementById('back-to-admin-partners').style.display = 'none';
+
+  document.getElementById('dash-admin').classList.add('open');
+  await adminLoadCategories();
+  await adminLoadMaterials();
+  await adminLoadPartners();
+  await adminLoadMessages();
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.adminPreviewDashboard     = adminPreviewDashboard;
+window.adminExitPreview          = adminExitPreview;
 window.adminLoadCategories       = adminLoadCategories;
 window.adminLoadMaterials        = adminLoadMaterials;
 window.adminDeleteMaterial       = adminDeleteMaterial;

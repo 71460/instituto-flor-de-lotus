@@ -397,8 +397,11 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
       <h2 class="dash-welcome lpt">Bem-vinda, <span>Familia</span> &#x1FAB7;</h2>
       <h2 class="dash-welcome len" style="display:none">Welcome, <span>Family</span> &#x1FAB7;</h2>
     </div>
-    <button class="dash-logout" onclick="doLogout()"><span class="lpt-i">&#x2190; Sair</span><span class="len-i">&#x2190; Logout</span>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+      <button id="back-to-admin-parents" class="forum-reply-btn" style="display:none" onclick="adminExitPreview()">&#x2699;&#xFE0F; Voltar ao Painel Admin</button>
+      <button class="dash-logout" onclick="doLogout()"><span class="lpt-i">&#x2190; Sair</span><span class="len-i">&#x2190; Logout</span>
 <span class="les-i" style="display:none">&#x2190; Logout</span></button>
+    </div>
   </div>
 
   <div class="stat-boxes">
@@ -564,8 +567,11 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
       <h2 class="dash-welcome lpt">Bem-vindo(a), <span>Parceiro</span> &#x1FAB7;</h2>
       <h2 class="dash-welcome len" style="display:none">Welcome, <span>Partner</span> &#x1FAB7;</h2>
     </div>
-    <button class="dash-logout" onclick="doLogout()"><span class="lpt-i">&#x2190; Sair</span><span class="len-i">&#x2190; Logout</span>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+      <button id="back-to-admin-partners" class="forum-reply-btn" style="display:none" onclick="adminExitPreview()">&#x2699;&#xFE0F; Voltar ao Painel Admin</button>
+      <button class="dash-logout" onclick="doLogout()"><span class="lpt-i">&#x2190; Sair</span><span class="len-i">&#x2190; Logout</span>
 <span class="les-i" style="display:none">&#x2190; Logout</span></button>
+    </div>
   </div>
 
   <div class="stat-boxes">
@@ -697,7 +703,11 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
       <p style="font-size:.75rem;color:var(--txl);margin-bottom:.2rem;letter-spacing:.08em;text-transform:uppercase;font-weight:500">&#x2699;&#xFE0F; Painel Administrativo</p>
       <h2 class="dash-welcome">Olá, <span id="admin-name-display">Equipe</span> &#x1FAB7;</h2>
     </div>
-    <button class="dash-logout" onclick="doLogout()">&#x2190; Sair</button>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+      <button class="forum-reply-btn" onclick="adminPreviewDashboard('parents')">&#x1F46A; Ver como Pais</button>
+      <button class="forum-reply-btn" onclick="adminPreviewDashboard('partners')">&#x1F91D; Ver como Parceiros</button>
+      <button class="dash-logout" onclick="doLogout()">&#x2190; Sair</button>
+    </div>
   </div>
 
   <div class="tab-nav" id="tab-nav-admin">
