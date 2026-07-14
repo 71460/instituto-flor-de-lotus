@@ -1,7 +1,24 @@
 #!/usr/bin/env node
+// Uso: node create-tcc-access.js --email=seu@email.com --pass=SUASENHA --nome="Seu Nome" [--role=parent|partner|admin]
 const https = require('https');
 const path = require('path');
 const fs = require('fs');
+
+const args = {};
+process.argv.slice(2).forEach(arg => {
+  const m = arg.match(/^--([^=]+)=(.*)$/);
+  if (m) args[m[1]] = m[2];
+});
+
+const email = args.email;
+const pass = args.pass;
+const nome = args.nome || 'Usuário';
+const role = args.role || 'parent';
+
+if (!email || !pass) {
+  console.error('Uso: node create-tcc-access.js --email=seu@email.com --pass=SUASENHA --nome="Seu Nome" [--role=parent|partner|admin]');
+  process.exit(1);
+}
 
 const envPath = path.join(__dirname, 'materiais', '.env');
 const envContent = fs.readFileSync(envPath, 'utf-8');
@@ -28,20 +45,19 @@ function req(method, urlPath, body = null) {
 }
 
 (async () => {
-  console.log('\n=== CRIANDO ACESSO URGENTE — REDACTED_EMAIL ===\n');
+  console.log(`\n=== CRIANDO ACESSO — ${email} ===\n`);
 
   const authRes = await req('POST', '/auth/v1/admin/users', {
-    email: 'REDACTED_EMAIL',
-    password: 'REDACTED_PASSWORD',
+    email,
+    password: pass,
     email_confirm: true,
-    user_metadata: { full_name: 'Tiago' }
+    user_metadata: { full_name: nome }
   });
 
   if (authRes.status >= 400) {
     console.error(`❌ Erro ao criar usuário (${authRes.status}):`, JSON.stringify(authRes.body));
     if (authRes.body && /password/i.test(JSON.stringify(authRes.body))) {
-      console.error('\n⚠️  Provável causa: senha "3214" (4 caracteres) abaixo do mínimo exigido pelo Supabase.');
-      console.error('    Rode novamente com uma senha mais longa, ex: node create-tcc-access.js --pass=SUASENHA\n');
+      console.error('\n⚠️  Provável causa: senha abaixo do mínimo exigido pelo Supabase.\n');
     }
     process.exit(1);
   }
@@ -50,19 +66,18 @@ function req(method, urlPath, body = null) {
 
   const profRes = await req('POST', '/rest/v1/profiles', {
     id: userId,
-    full_name: 'Tiago',
-    role: 'parent',
+    full_name: nome,
+    role,
     active: true
   });
   if (profRes.status >= 400) {
     console.error(`❌ Erro ao criar perfil (${profRes.status}):`, JSON.stringify(profRes.body));
     process.exit(1);
   }
-  console.log('✅ Perfil criado: role=parent');
+  console.log(`✅ Perfil criado: role=${role}`);
 
   console.log('\n=== PRONTO ===');
-  console.log('• Email:  REDACTED_EMAIL');
-  console.log('• Senha:  REDACTED_PASSWORD');
-  console.log('• Role:   parent (Área dos Pais)');
+  console.log(`• Email:  ${email}`);
+  console.log(`• Role:   ${role}`);
   console.log('\n🎯 Já pode logar no portal agora.\n');
 })().catch(err => { console.error('Erro fatal:', err.message); process.exit(1); });
