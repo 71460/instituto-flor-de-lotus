@@ -287,14 +287,14 @@ async function loadMaterials(role) {
 
   if (error || !materials) return;
 
-  renderMaterialsGrid(gridEl, materials, lang);
+  renderMaterialsGrid(gridEl, materials, lang, undefined, role);
 
   // Aba "Atividades em Casa" — mesmo conjunto, filtrado pela categoria 'atividades'
   if (role === 'parent') {
     const atividadesEl = document.getElementById('parents-tab-atividades');
     if (atividadesEl) {
       const atividades = materials.filter(mat => mat.category_slug === 'atividades');
-      renderMaterialsGrid(atividadesEl, atividades, lang, 'Nenhuma atividade disponível no momento.');
+      renderMaterialsGrid(atividadesEl, atividades, lang, 'Nenhuma atividade disponível no momento.', role);
     }
   }
 
@@ -303,7 +303,7 @@ async function loadMaterials(role) {
     const escolaEl = document.getElementById('partners-tab-escola');
     if (escolaEl) {
       const escola = materials.filter(mat => mat.category_slug === 'escola');
-      renderMaterialsGrid(escolaEl, escola, lang, 'Nenhum kit escolar disponível no momento.');
+      renderMaterialsGrid(escolaEl, escola, lang, 'Nenhum kit escolar disponível no momento.', role);
     }
 
     const statEscolaEl = document.getElementById('stat-partners-escola');
@@ -323,14 +323,14 @@ async function loadMaterials(role) {
   if (statEl) statEl.textContent = materials.length;
 }
 
-function renderMaterialsGrid(gridEl, materials, lang, emptyMsg) {
+function renderMaterialsGrid(gridEl, materials, lang, emptyMsg, role) {
   const grid = document.createElement('div');
   grid.className = 'materials-grid';
 
   if (materials.length === 0) {
     grid.innerHTML = `<p style="color:var(--txl);font-size:.9rem;grid-column:1/-1;text-align:center;padding:2rem">${emptyMsg || 'Nenhum material disponível no momento.'}</p>`;
   } else {
-    materials.forEach(mat => grid.appendChild(buildMaterialCard(mat, lang)));
+    materials.forEach(mat => grid.appendChild(buildMaterialCard(mat, lang, role)));
   }
 
   const existingGrid = gridEl.querySelector('.materials-grid');
@@ -341,7 +341,7 @@ function renderMaterialsGrid(gridEl, materials, lang, emptyMsg) {
   }
 }
 
-function buildMaterialCard(mat, lang) {
+function buildMaterialCard(mat, lang, role) {
   const title = lang === 'en' ? (mat.title_en || mat.title_pt)
               : lang === 'es' ? (mat.title_es || mat.title_pt)
               : mat.title_pt;
@@ -366,7 +366,7 @@ function buildMaterialCard(mat, lang) {
     <p class="mat-desc">${desc || ''}</p>
     <div class="mat-meta">
       <span class="mat-tag">${mat.file_type?.toUpperCase() || 'PDF'}${mat.file_size ? ' · ' + mat.file_size : ''}${mat.duration ? ' · ' + mat.duration : ''}</span>
-      <button class="mat-download" onclick="downloadMaterial('${mat.id}','${mat.file_url || ''}','${mat.file_type}', this)">${actionLabel}</button>
+      <button class="mat-download" onclick="downloadMaterial('${mat.id}','${mat.file_url || ''}','${mat.file_type}','${role || 'parent'}', this)">${actionLabel}</button>
     </div>`;
   return card;
 }
@@ -375,29 +375,29 @@ function buildMaterialCard(mat, lang) {
 // DOWNLOAD DE MATERIAL
 // ══════════════════════════════════════════════════════════════════
 
-async function downloadMaterial(materialId, fileUrl, fileType, btnEl) {
+async function downloadMaterial(materialId, fileUrl, fileType, role, btnEl) {
   // Link externo e vídeo abrem em ABA; os demais tipos BAIXAM o arquivo.
   // Para os que abrem em aba, ela é criada já no clique (gesto síncrono),
   // senão o navegador bloqueia como pop-up depois dos awaits.
   const opensInTab = fileType === 'video' || (fileUrl && fileUrl.startsWith('http'));
   const newTab = opensInTab ? window.open('', '_blank') : null;
 
+  // Áreas de Pais e Parceiros são de acesso livre — o bucket é definido
+  // pela área em que o material está sendo exibido, não por login.
+  const bucket = role === 'partner' ? 'materiais-parceiros' : 'materiais-pais';
+
+  // Registrar acesso (analytics) — só quando há usuário logado (admin/staff
+  // navegando pelo painel); visitantes anônimos não geram esse registro.
   const { data: { user } } = await _sb.auth.getUser();
-  if (!user) { if (newTab) newTab.close(); return; }
+  if (user) {
+    await _sb.from('material_access').insert({
+      user_id: user.id,
+      material_id: materialId,
+      action: fileType === 'video' ? 'view' : 'download'
+    });
+  }
 
-  // Descobrir o role do usuário para saber qual bucket usar
-  const { data: profile } = await _sb
-    .from('profiles').select('role').eq('id', user.id).single();
-  const bucket = profile?.role === 'partner' ? 'materiais-parceiros' : 'materiais-pais';
-
-  // Registrar acesso (analytics)
-  await _sb.from('material_access').insert({
-    user_id: user.id,
-    material_id: materialId,
-    action: fileType === 'video' ? 'view' : 'download'
-  });
-
-  // Incrementar contador
+  // Incrementar contador (função pública, não exige login)
   await _sb.rpc('increment_download', { mat_id: materialId });
 
   if (fileUrl && fileUrl.startsWith('http')) {

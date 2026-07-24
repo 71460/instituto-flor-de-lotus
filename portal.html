@@ -313,7 +313,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
 </div>
 
 <div class="profile-selector" id="profile-selector">
-  <div class="profile-card" onclick="openLogin('parents')" id="card-parents">
+  <div class="profile-card" onclick="openFreeArea('parents')" id="card-parents">
     <div class="profile-icon profile-icon-parents">&#x1F49C;</div>
     <h2 class="profile-title lpt">Area dos Pais &amp; Responsaveis</h2>
     <h2 class="profile-title len" style="display:none">Parents &amp; Guardians Area</h2>
@@ -337,7 +337,7 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
 <span class="les-i" style="display:none">Ingresar &#x2192;</span></span>
   </div>
 
-  <div class="profile-card" onclick="openLogin('partners')" id="card-partners">
+  <div class="profile-card" onclick="openFreeArea('partners')" id="card-partners">
     <div class="profile-icon profile-icon-partners">&#x1F91D;</div>
     <h2 class="profile-title lpt">Area de Parceiros &amp; Colaboradores</h2>
     <h2 class="profile-title len" style="display:none">Partners &amp; Collaborators Area</h2>
@@ -360,6 +360,9 @@ body{font-family:var(--fb);color:var(--tx);background:var(--lilbg);line-height:1
     <span class="profile-cta"><span class="lpt-i">Entrar &#x2192;</span><span class="len-i">Log In &#x2192;</span>
 <span class="les-i" style="display:none">Ingresar &#x2192;</span></span>
   </div>
+</div>
+<div style="text-align:center;margin-top:.5rem">
+  <a href="javascript:void(0)" onclick="openLogin('admin')" style="font-size:.78rem;color:var(--txl);text-decoration:underline;cursor:pointer">&#x2699;&#xFE0F; Equipe Flor de Lotus &mdash; entrar como administrador</a>
 </div>
 <div style="height:3rem"></div>
 
@@ -895,6 +898,10 @@ function openLogin(profile){
     badge.innerHTML='<div class="login-profile-badge parents">&#x1F49C; Pais &amp; Responsaveis</div>';
     title.textContent='Entrar na Area Familiar';
     sub.textContent='Acesse materiais e suporte para o desenvolvimento do seu filho';
+  } else if(profile==='admin'){
+    badge.innerHTML='<div class="login-profile-badge partners">&#x2699;&#xFE0F; Equipe Flor de Lotus</div>';
+    title.textContent='Entrar como Administrador';
+    sub.textContent='Acesso restrito a equipe do Instituto';
   } else {
     badge.innerHTML='<div class="login-profile-badge partners">&#x1F91D; Parceiros &amp; Colaboradores</div>';
     title.textContent='Entrar na Area Profissional';
@@ -904,6 +911,16 @@ function openLogin(profile){
 }
 function closeLogin(){document.getElementById('login-overlay').classList.remove('open')}
 function closeLoginOverlay(e){if(e.target===document.getElementById('login-overlay'))closeLogin()}
+// Areas de Pais e Parceiros sao de acesso livre (sem senha) — abrem direto,
+// sem passar pelo login. O login continua existindo só para a equipe (admin/staff).
+function openFreeArea(kind){
+  document.getElementById('profile-selector').style.display='none';
+  var dashId = kind==='parents' ? 'dash-parents' : 'dash-partners';
+  document.getElementById(dashId).classList.add('open');
+  if(kind==='parents') loadParentDashboard();
+  else loadPartnerDashboard();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 // As funções doLogin() e doLogout() reais (conectadas ao Supabase) são
 // definidas em portal_supabase.js e atribuídas a window.doLogin / window.doLogout.
 // As versões antigas (simuladas, sem checagem de senha) foram removidas
