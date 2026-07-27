@@ -186,6 +186,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .score-footer{display:flex;justify-content:space-between;align-items:center;}
 .score-pct{font-size:.78rem;font-weight:700;color:var(--text-mid);}
 .score-items{font-size:.66rem;color:var(--text-soft,#9590A8);margin-top:.3rem;opacity:.8;}
+
+/* ── Flor do Desenvolvimento ───────────────────────────── */
+.lotus-wrap{background:var(--bg-card);border-radius:20px;padding:1.2rem .8rem 1rem;box-shadow:0 4px 20px rgba(123,141,184,.10);text-align:center;}
+.lotus-wrap svg{width:100%;max-width:390px;height:auto;display:block;margin:0 auto;}
+.lotus-caption{font-size:.72rem;color:var(--text-soft,#9590A8);margin-top:.5rem;line-height:1.5;}
+.petal{transform-origin:center;animation:petalBloom .9s cubic-bezier(.34,1.4,.64,1) backwards;}
+@keyframes petalBloom{from{opacity:0;transform:scale(.15);}to{opacity:.88;transform:scale(1);}}
+.lotus-lbl{font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;fill:var(--text-mid,#5A5270);}
+.lotus-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:600;fill:var(--text-soft,#9590A8);}
+
+/* ── Marcos conquistados / quase lá ────────────────────── */
+.ms-card{background:var(--bg-card);border-radius:18px;padding:1.1rem 1.2rem;box-shadow:0 4px 18px rgba(123,141,184,.09);margin-bottom:.9rem;}
+.ms-head{display:flex;align-items:center;gap:.55rem;font-weight:700;font-size:.95rem;color:var(--text-dark,#2A2440);margin-bottom:.2rem;}
+.ms-sub{font-size:.74rem;color:var(--text-soft,#9590A8);margin-bottom:.8rem;line-height:1.5;}
+.ms-item{display:flex;align-items:flex-start;gap:.55rem;padding:.5rem 0;border-top:1px solid rgba(169,155,196,.14);font-size:.84rem;line-height:1.5;color:var(--text-mid,#5A5270);}
+.ms-item:first-of-type{border-top:none;}
+.ms-mark{flex-shrink:0;font-size:.9rem;line-height:1.4;}
+.ms-count{background:var(--grad-btn);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;}
 .pat-chip{font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:1rem;}
 .pat-chip.expected{background:#EDE9F8;color:var(--violet);}
 .pat-chip.variable{background:#FCF0FA;color:var(--orchid);}
@@ -241,6 +259,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* PRINT */
 @media print{
+  /* Flor e marcos: não partir no meio da página do relatório */
+  .lotus-wrap,.ms-card{page-break-inside:avoid;break-inside:avoid;box-shadow:none!important;border:1px solid #E4E0EC;}
+  .petal{animation:none!important;opacity:.88;}
+
   /* Ocultar tudo exceto resultados */
   .app-header,.q-nav,.action-grid,.no-print,
   #screen-home,#screen-questionnaire,#screen-loading,
@@ -450,8 +472,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div id="result-badge" class="result-badge">Desenvolvimento Esperado</div>
     </div>
     <div id="result-message" class="message-card"></div>
+    <div class="section-hd"><span>🪷</span><span>A Flor do Desenvolvimento</span></div>
+    <div class="lotus-wrap"><div id="lotus-chart"></div><p class="lotus-caption">Cada pétala é uma área. Quanto mais aberta, mais marcos já alcançados.</p></div>
     <div class="section-hd"><span>📊</span><span>Perfil por Área</span></div>
     <div class="scores-grid" id="scores-grid"></div>
+    <div id="milestones-wrap"></div>
     <div class="disclaimer"><strong>⚠️ Aviso importante:</strong> Este instrumento é de rastreamento observacional e <strong>não substitui avaliação clínica</strong>. Os resultados devem ser interpretados por profissional de saúde qualificado.</div>
     <div class="section-hd"><span>💡</span><span>Recomendações</span></div>
     <div id="rec-wrap"></div>
@@ -729,6 +754,85 @@ function domainSummary(catScores){
   return{big:total+' de '+total,label:'áreas no ritmo esperado'};
 }
 
+// Flor do desenvolvimento: cada pétala é um domínio, o tamanho vem da
+// pontuação e a cor do padrão. Mostra o FORMATO do perfil de relance —
+// cinco barras separadas não deixam ver que o desenvolvimento é desigual.
+function renderLotus(catScores){
+  const host=document.getElementById('lotus-chart');
+  if(!host)return;
+  const cats=['communication','motor','social','autonomy','sensory'];
+  // D fica fora do alcance da pétala mais longa (130) para o rótulo nunca
+  // cair em cima do desenho.
+  const cx=220,cy=200,D=178;
+  const cores={
+    expected:['#6B8BB8','#A890CC'],
+    variable:['#D87EC8','#F0A8E4'],
+    attention_needed:['#C4884A','#E8AA6A'],
+    not_applicable:['#CFC9DC','#E4E0EC']
+  };
+  let defs='',petalas='',rotulos='';
+  cats.forEach((cat,i)=>{
+    const cs=catScores[cat]||{score:0,pattern:'not_applicable'};
+    const c=cores[cs.pattern]||cores.not_applicable;
+    const len=48+(cs.score/100)*82;
+    const w=len*0.44;
+    const ang=i*72;
+    defs+=`<linearGradient id="petGrad${i}" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="${c[0]}"/><stop offset="100%" stop-color="${c[1]}"/></linearGradient>`;
+    petalas+=`<g transform="translate(${cx},${cy}) rotate(${ang})"><path class="petal" style="animation-delay:${i*0.12}s" d="M0 0 C ${-w} ${-len*0.45}, ${-w*0.6} ${-len*0.9}, 0 ${-len} C ${w*0.6} ${-len*0.9}, ${w} ${-len*0.45}, 0 0 Z" fill="url(#petGrad${i})"/></g>`;
+    const th=ang*Math.PI/180;
+    const lx=Math.round(cx+D*Math.sin(th)),ly=Math.round(cy-D*Math.cos(th));
+    const naoAvaliado=cs.pattern==='not_applicable';
+    rotulos+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="15">${CAT_INFO[cat].emoji}</text>`
+           +`<text class="lotus-lbl" x="${lx}" y="${ly+15}" text-anchor="middle">${CAT_INFO[cat].label}</text>`
+           +`<text class="lotus-val" x="${lx}" y="${ly+28}" text-anchor="middle">${naoAvaliado?'—':cs.score+'%'}</text>`;
+  });
+  host.innerHTML=`<svg viewBox="0 0 440 420" role="img" aria-label="Perfil do desenvolvimento por área, em forma de flor">
+    <defs>${defs}<radialGradient id="miolo"><stop offset="0%" stop-color="#FFF6FC"/><stop offset="100%" stop-color="#F0D8EC"/></radialGradient></defs>
+    ${petalas}
+    <circle cx="${cx}" cy="${cy}" r="19" fill="url(#miolo)" opacity=".95"/>
+    <circle cx="${cx}" cy="${cy}" r="19" fill="none" stroke="#E8C4E0" stroke-width="1"/>
+    ${rotulos}
+  </svg>`;
+}
+
+// Celebra o que a criança JÁ faz. A tela mostrava só pontuação e o que
+// falta; para a família, ver as conquistas pelo nome importa tanto quanto.
+function renderMilestones(){
+  const host=document.getElementById('milestones-wrap');
+  if(!host)return;
+  const conquistados=[],emergindo=[];
+  state.questions.forEach(q=>{
+    const v=state.responses[q.id];
+    if(v==='yes')conquistados.push(q);
+    else if(v==='sometimes')emergindo.push(q);
+  });
+  let html='';
+  if(conquistados.length){
+    html+=`<div class="ms-card">
+      <div class="ms-head"><span>🌟</span><span>Já conquistou <span class="ms-count">${conquistados.length}</span> ${conquistados.length===1?'marco':'marcos'}</span></div>
+      <div class="ms-sub">Cada um destes é uma habilidade construída — vale celebrar!</div>
+      ${conquistados.map(q=>`<div class="ms-item"><span class="ms-mark">✅</span><span>${q.text.replace(/^Seu filho /,'').replace(/\?$/,'')}</span></div>`).join('')}
+    </div>`;
+  }
+  if(emergindo.length){
+    html+=`<div class="ms-card">
+      <div class="ms-head"><span>🌱</span><span><span class="ms-count">${emergindo.length}</span> ${emergindo.length===1?'habilidade brotando':'habilidades brotando'}</span></div>
+      <div class="ms-sub">Já aparecem às vezes: estão a caminho. É aqui que a prática do dia a dia mais ajuda.</div>
+      ${emergindo.map(q=>`<div class="ms-item"><span class="ms-mark">🌱</span><span>${q.text.replace(/^Seu filho /,'').replace(/\?$/,'')}</span></div>`).join('')}
+    </div>`;
+  }
+  // Sem "sim" nem "às vezes" é justamente o caso mais delicado — deixar a
+  // seção vazia soaria como abandono. Uma palavra de acolhimento, sem
+  // minimizar o que as respostas mostram.
+  if(!html){
+    html=`<div class="ms-card">
+      <div class="ms-head"><span>💜</span><span>Um ponto de partida</span></div>
+      <div class="ms-sub">As respostas de hoje são uma fotografia deste momento, não um veredito sobre o futuro do seu filho. Nenhuma resposta aqui define o caminho dele — mas todas ajudam a equipe a entender por onde começar. Procurar apoio agora é o melhor cuidado que você pode oferecer, e você não está sozinho nisso.</div>
+    </div>`;
+  }
+  host.innerHTML=html;
+}
+
 function finishAssessment(){
   showScreen('loading');
   setTimeout(()=>{state.result=calcResults();saveSession(false);renderResults();showScreen('results');},2000);
@@ -753,6 +857,8 @@ function renderResults(){
   const summary=domainSummary(r.catScores);
   document.getElementById('result-score-big').textContent=summary.big;
   document.getElementById('result-score-label').textContent=summary.label;
+  renderLotus(r.catScores);
+  renderMilestones();
   document.getElementById('result-badge').textContent=pc.label;
 
   const msgs={
