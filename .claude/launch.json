@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "5500"],
       "port": 5500
+    },
+    {
+      "name": "pequenos-sinais-preview",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5501", "--directory", "apps/pequenos-passos"],
+      "port": 5501
     }
   ]
 }
