@@ -185,6 +185,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .score-bar-fill.attention_needed{background:var(--grad-score-attention);}
 .score-footer{display:flex;justify-content:space-between;align-items:center;}
 .score-pct{font-size:.78rem;font-weight:700;color:var(--text-mid);}
+.score-items{font-size:.66rem;color:var(--text-soft,#9590A8);margin-top:.3rem;opacity:.8;}
 .pat-chip{font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:1rem;}
 .pat-chip.expected{background:#EDE9F8;color:var(--violet);}
 .pat-chip.variable{background:#FCF0FA;color:var(--orchid);}
@@ -221,8 +222,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .hist-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.625rem;}
 .hist-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;color:var(--text);font-size:.92rem;}
 .hist-meta{font-size:.75rem;color:var(--text-muted);margin-top:.1rem;}
-.hist-score-col{text-align:right;}
-.hist-pct{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.5rem;background:var(--grad-btn);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hist-score-col{text-align:right;flex-shrink:0;}
+.hist-pct{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.2rem;white-space:nowrap;background:var(--grad-btn);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .hist-pattern{font-size:.72rem;color:var(--text-muted);}
 .hist-minibars{display:flex;gap:3px;margin-top:.5rem;}
 .hist-minibar{height:4px;border-radius:3px;flex:1;}
@@ -445,7 +446,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <h2 id="result-title">Avaliação Concluída</h2>
       <div id="result-date" class="result-date"></div>
       <div class="result-score-big" id="result-score-big">—</div>
-      <div class="result-score-label">pontuação geral</div>
+      <div class="result-score-label" id="result-score-label">áreas observadas</div>
       <div id="result-badge" class="result-badge">Desenvolvimento Esperado</div>
     </div>
     <div id="result-message" class="message-card"></div>
@@ -683,14 +684,21 @@ function goNext(){
 
 function calcCategoryScore(qids,responses){
   const answered=qids.filter(id=>responses[id]);
-  if(!answered.length)return{score:0,pattern:'not_applicable',yes:0,sometimes:0,not_yet:0,na:0};
+  if(!answered.length)return{score:0,pattern:'not_applicable',yes:0,sometimes:0,not_yet:0,na:0,items:0};
   let yes=0,sometimes=0,not_yet=0,na=0;
   answered.forEach(id=>{const v=responses[id];if(v==='yes')yes++;else if(v==='sometimes')sometimes++;else if(v==='not_yet')not_yet++;else na++;});
   const applicable=answered.length-na;
-  let score=applicable>0?Math.round((yes*100+sometimes*50)/(applicable*100)*100):0;
-  let pattern=applicable>0?'expected':'not_applicable';
-  if(applicable>0){const yp=(yes/applicable)*100;if(yp>=75)pattern='expected';else if(yp>=45)pattern='variable';else pattern='attention_needed';}
-  return{score,pattern,yes,sometimes,not_yet,na};
+  if(applicable<=0)return{score:0,pattern:'not_applicable',yes,sometimes,not_yet,na,items:0};
+  // "Às vezes" = habilidade emergente, vale meio ponto. O padrão é classificado
+  // pela MESMA pontuação exibida no card — antes ele olhava só o "Sim", então
+  // uma criança adquirindo tudo ("às vezes" em todas as perguntas) caía no
+  // alerta máximo, e cards de 50% e de 0% recebiam a mesma tarja "Observar".
+  const score=Math.round((yes*100+sometimes*50)/(applicable*100)*100);
+  let pattern;
+  if(score>=75)pattern='expected';
+  else if(score>=45)pattern='variable';
+  else pattern='attention_needed';
+  return{score,pattern,yes,sometimes,not_yet,na,items:applicable};
 }
 
 function calcResults(){
@@ -702,8 +710,23 @@ function calcResults(){
   const attCount=patterns.filter(p=>p==='attention_needed').length;
   const varCount=patterns.filter(p=>p==='variable').length;
   let overallPattern=attCount>=3?'multiple_areas':attCount>=1?'attention_recommended':varCount>=2?'variable':'expected';
+  // avgScore continua salvo por compatibilidade com avaliações antigas, mas não
+  // é mais exibido em destaque: média entre domínios diferentes escondia o pior.
   const avgScore=rated.length?Math.round(rated.reduce((a,c)=>a+catScores[c].score,0)/rated.length):0;
   return{catScores,overallPattern,avgScore,ageGroup:state.ageGroup};
+}
+
+// Resumo por área usado tanto no resultado quanto no histórico, para os dois
+// contarem a mesma história (antes o histórico repetia a média geral).
+function domainSummary(catScores){
+  const rated=Object.values(catScores||{}).filter(cs=>cs&&cs.pattern!=='not_applicable');
+  const total=rated.length;
+  const att=rated.filter(cs=>cs.pattern==='attention_needed').length;
+  const vari=rated.filter(cs=>cs.pattern==='variable').length;
+  if(!total)return{big:'—',label:'sem áreas avaliadas'};
+  if(att>0)return{big:att+' de '+total,label:(att===1?'área para observar':'áreas para observar')+' de perto'};
+  if(vari>0)return{big:vari+' de '+total,label:vari===1?'área em construção':'áreas em construção'};
+  return{big:total+' de '+total,label:'áreas no ritmo esperado'};
 }
 
 function finishAssessment(){
@@ -723,7 +746,13 @@ function renderResults(){
   // Para o rodapé de impressão
   const rb = document.getElementById('report-area');
   if(rb) rb.setAttribute('data-date', dateFormatted);
-  document.getElementById('result-score-big').textContent=r.avgScore+'%';
+  // Resumo por área em vez de média geral: a média entre domínios diferentes
+  // escondia o que mais importa — uma criança com Comunicação em 0% e o resto
+  // perfeito exibia "80%" em destaque, número que tranquiliza justamente quando
+  // não deveria. Em rastreamento vale o pior domínio, não a média.
+  const summary=domainSummary(r.catScores);
+  document.getElementById('result-score-big').textContent=summary.big;
+  document.getElementById('result-score-label').textContent=summary.label;
   document.getElementById('result-badge').textContent=pc.label;
 
   const msgs={
@@ -742,6 +771,7 @@ function renderResults(){
       <div class="score-cat-row"><span class="score-emoji">${ci.emoji}</span><span class="score-cat-name">${ci.label}</span></div>
       <div class="score-bar-track"><div class="score-bar-fill ${cs.pattern}" style="width:0%" data-target="${cs.score}"></div></div>
       <div class="score-footer"><span class="score-pct">${cs.score}%</span><span class="pat-chip ${cs.pattern}">${patLabels[cs.pattern]||cs.pattern}</span></div>
+      <div class="score-items">${cs.items===1?'1 observação':cs.items+' observações'}</div>
     </div>`;
   });
   requestAnimationFrame(()=>{
@@ -749,16 +779,7 @@ function renderResults(){
       setTimeout(()=>{el.style.width=el.dataset.target+'%';},100 + i*80);
     });
   });
-  // Animar o score grande com contagem
-  const scoreEl = document.getElementById('result-score-big');
-  const target = r.avgScore;
-  let current = 0;
-  const step = Math.ceil(target / 30);
-  const counter = setInterval(()=>{
-    current = Math.min(current + step, target);
-    scoreEl.textContent = current + '%';
-    if(current >= target) clearInterval(counter);
-  }, 40);
+  // (a contagem animada de "%" saiu junto com a média geral)
 
   const recsByPattern={
     expected:['Continue com interações e brincadeiras naturais do cotidiano','Compartilhe com o pediatra nas consultas regulares','Mantenha um ambiente rico em estímulos','Celebre cada conquista, grande ou pequena 🌟'],
@@ -796,7 +817,9 @@ let currentSessionId = null;
 function saveSession(showMsg=true){
   if(!state.result) return;
   // Gera ID único para esta avaliação se ainda não tem
-  if(!currentSessionId) currentSessionId = Date.now().toString();
+  // Sufixo aleatório: só o timestamp fazia duas avaliações salvas no mesmo
+  // milissegundo colidirem, e a de trás apagava a da frente silenciosamente.
+  if(!currentSessionId) currentSessionId = Date.now().toString()+'-'+Math.random().toString(36).slice(2,8);
   const sessions = JSON.parse(localStorage.getItem('ps_sessions')||'[]');
   // Remove entrada anterior com mesmo ID (evita duplicata ao re-salvar)
   const idx = sessions.findIndex(s => s.id === currentSessionId);
@@ -808,7 +831,10 @@ function saveSession(showMsg=true){
     ageGroup: state.result.ageGroup,
     overallPattern: state.result.overallPattern,
     avgScore: state.result.avgScore,
-    catScores: state.result.catScores
+    catScores: state.result.catScores,
+    // Respostas item a item: permite reabrir a avaliação e comparar marcos
+    // específicos entre datas ("o que seu filho conquistou desde a última vez").
+    responses: Object.assign({}, state.responses)
   });
   if(sessions.length>50) sessions.pop();
   localStorage.setItem('ps_sessions', JSON.stringify(sessions));
@@ -850,7 +876,7 @@ function renderHistory(){
       const sc=s.catScores[cat];
       return `<div class="hist-minibar" style="background:${catColors[sc?.pattern]||'#ccc'}"></div>`;
     }).join('');
-    return `<div class="hist-card"><div class="hist-top"><div><div class="hist-name">${s.childName?s.childName+' · ':''}${AGE_LABELS[s.ageGroup]}</div><div class="hist-meta">${dateStr}</div></div><div class="hist-score-col"><div class="hist-pct">${s.avgScore}%</div><div class="hist-pattern">${pc?.label||s.overallPattern}</div></div></div><div class="hist-minibars">${bars}</div></div>`;
+    return `<div class="hist-card"><div class="hist-top"><div><div class="hist-name">${s.childName?s.childName+' · ':''}${AGE_LABELS[s.ageGroup]}</div><div class="hist-meta">${dateStr}</div></div><div class="hist-score-col"><div class="hist-pct">${domainSummary(s.catScores).big}</div><div class="hist-pattern">${pc?.label||s.overallPattern}</div></div></div><div class="hist-minibars">${bars}</div></div>`;
   }).join('');
 }
 
@@ -858,7 +884,16 @@ function whatsappShare(){
   if(!state.result)return;
   const r=state.result;const pc=PATTERN_CONFIG[r.overallPattern];
   const childLine=state.childName?'👶 '+state.childName+'\n':'';
-  const msg=encodeURIComponent('🌸 *Pequenos Sinais — Clínica Integrada Flor de Lótus*\n\n'+childLine+'📅 '+new Date().toLocaleDateString('pt-BR')+'\n📋 Faixa: '+AGE_LABELS[r.ageGroup]+'\n📊 Resultado: '+pc.label+' ('+r.avgScore+'%)\n\n🏥 Clínica Integrada Flor de Lótus\n📱 (15) 99182-9151');
+  // Perfil por área em vez da média geral: quem recebe (pediatra, terapeuta,
+  // o outro cuidador) precisa saber QUAIS áreas observar, não um número único.
+  const marks={expected:'✅',variable:'🔸',attention_needed:'🔺'};
+  const names={expected:'esperado',variable:'em construção',attention_needed:'observar de perto'};
+  const catLines=['communication','motor','social','autonomy','sensory'].map(cat=>{
+    const cs=r.catScores[cat];
+    if(!cs||cs.pattern==='not_applicable')return null;
+    return marks[cs.pattern]+' '+CAT_INFO[cat].label+': '+names[cs.pattern];
+  }).filter(Boolean).join('\n');
+  const msg=encodeURIComponent('🌸 *Pequenos Sinais — Clínica Integrada Flor de Lótus*\n\n'+childLine+'📅 '+new Date().toLocaleDateString('pt-BR')+'\n📋 Faixa: '+AGE_LABELS[r.ageGroup]+'\n📊 Resultado: '+pc.label+'\n\n'+catLines+'\n\n_Rastreamento observacional — não substitui avaliação clínica._\n\n🏥 Clínica Integrada Flor de Lótus\n📱 (15) 99182-9151');
   window.open('https://wa.me/?text='+msg,'_blank');
 }
 
