@@ -204,6 +204,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .ms-item:first-of-type{border-top:none;}
 .ms-mark{flex-shrink:0;font-size:.9rem;line-height:1.4;}
 .ms-count{background:var(--grad-btn);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;}
+.prog-legend{display:flex;flex-wrap:wrap;gap:.5rem .9rem;justify-content:center;margin-top:.8rem;}
+.prog-legend-item{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;color:var(--text-mid,#5A5270);}
+.prog-legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.prog-row{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem 0;border-top:1px solid rgba(169,155,196,.14);font-size:.82rem;}
+.prog-row:first-of-type{border-top:none;}
+.prog-cat{color:var(--text-mid,#5A5270);font-weight:600;flex-shrink:0;}
+.prog-delta-txt{font-size:.78rem;color:var(--text-soft,#9590A8);text-align:right;}
+.prog-delta-txt b{font-weight:800;}
+.prog-delta-txt.up{color:#4a7a3a;}
+.prog-delta-txt.down{color:#b5542e;}
+.prog-delta-txt.stable{color:var(--text-soft,#9590A8);}
+.prog-delta-txt.muted{font-style:italic;opacity:.7;}
 .pat-chip{font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:1rem;}
 .pat-chip.expected{background:#EDE9F8;color:var(--violet);}
 .pat-chip.variable{background:#FCF0FA;color:var(--orchid);}
@@ -266,7 +278,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   /* Ocultar tudo exceto resultados */
   .app-header,.q-nav,.action-grid,.no-print,
   #screen-home,#screen-questionnaire,#screen-loading,
-  #screen-history,#screen-info{display:none!important}
+  #screen-history,#screen-info,#screen-progress{display:none!important}
 
   /* Forçar visibilidade dos resultados */
   body{background:#fff!important;margin:0;padding:0;}
@@ -500,12 +512,26 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.1rem;background:var(--grad-btn);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Histórico</div>
         <div id="hist-count" style="font-size:.75rem;color:var(--text-muted)"></div>
       </div>
-      <div style="display:flex;gap:.5rem">
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end">
+        <button class="btn btn-ghost btn-sm" onclick="showProgress()">📈 Evolução</button>
         <button class="btn btn-ghost btn-sm" style="color:#c0392b;border-color:#f5c6c6" onclick="clearHistory()">🗑️ Limpar</button>
         <button class="btn btn-ghost btn-sm" onclick="showHome()">← Início</button>
       </div>
     </div>
     <div id="history-list"></div>
+  </div>
+</div>
+
+<div id="screen-progress" class="screen">
+  <div class="history-body">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+      <div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.1rem;background:var(--grad-btn);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">📈 Evolução</div>
+        <div style="font-size:.75rem;color:var(--text-muted)">Progresso ao longo do tempo</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="showHistory()">← Histórico</button>
+    </div>
+    <div id="progress-body"></div>
   </div>
 </div>
 
@@ -734,7 +760,12 @@ function calcResults(){
   const patterns=rated.map(c=>catScores[c].pattern);
   const attCount=patterns.filter(p=>p==='attention_needed').length;
   const varCount=patterns.filter(p=>p==='variable').length;
-  let overallPattern=attCount>=3?'multiple_areas':attCount>=1?'attention_recommended':varCount>=2?'variable':'expected';
+  // O limiar era varCount>=2, mas o resumo por área (domainSummary, mostrado
+  // bem ao lado no mesmo card) já sinaliza "variável" a partir de 1 área —
+  // com exatamente 1 variável e 0 em alerta, o selo dizia "Desenvolvimento
+  // Esperado" enquanto o número grande dizia "1 de 5 área em construção".
+  // Os dois precisam concordar.
+  let overallPattern=attCount>=3?'multiple_areas':attCount>=1?'attention_recommended':varCount>=1?'variable':'expected';
   // avgScore continua salvo por compatibilidade com avaliações antigas, mas não
   // é mais exibido em destaque: média entre domínios diferentes escondia o pior.
   const avgScore=rated.length?Math.round(rated.reduce((a,c)=>a+catScores[c].score,0)/rated.length):0;
@@ -930,6 +961,9 @@ function openEbook(url,name){if(url==='#'){showToast('E-book de '+name+' em brev
 
 // ID único para a avaliação atual (evita duplicatas)
 let currentSessionId = null;
+// Nome da criança selecionada na tela de Evolução (persiste entre re-renders
+// ao trocar de filho no seletor)
+let progressChildSel = null;
 
 function saveSession(showMsg=true){
   if(!state.result) return;
@@ -1016,6 +1050,113 @@ function openHistorySession(id){
   state.result=hasItemData?calcResults():{catScores:s.catScores,overallPattern:s.overallPattern,avgScore:s.avgScore,ageGroup:s.ageGroup};
   renderResults();
   showScreen('results');
+}
+
+function showProgress(){renderProgress();showScreen('progress');}
+
+// Desenha as 5 linhas (uma por área) ao longo das avaliações de uma mesma
+// criança, ordenadas cronologicamente. Bolinhas coloridas pelo padrão daquele
+// momento (mesmas cores do resto do app) mostram a classificação ponto a
+// ponto, não só a tendência da linha.
+function buildProgressChart(sessions){
+  const cats=['communication','motor','social','autonomy','sensory'];
+  const domColors={communication:'#8B7BC4',motor:'#6B8BB8',social:'#C87EC8',autonomy:'#9B80C4',sensory:'#7B9BB8'};
+  const patColors={expected:'#7B8DB8',variable:'#D87EC8',attention_needed:'#C4884A'};
+  const x0=42,x1=612,y0=16,y1=228;
+  const times=sessions.map(s=>new Date(s.date).getTime());
+  const tMin=Math.min(...times),tMax=Math.max(...times);
+  const n=sessions.length;
+  const X=i=>tMax>tMin ? x0+((times[i]-tMin)/(tMax-tMin))*(x1-x0) : x0+(n>1?(i/(n-1))*(x1-x0):0);
+  const Y=score=>y1-(score/100)*(y1-y0);
+  const y45=Y(45),y75=Y(75);
+  // Faixas de fundo nos mesmos limiares usados para classificar cada área
+  // (>=75 esperado, >=45 variável, abaixo observar), pra ler o gráfico sem
+  // precisar decorar os números.
+  const bands=`<rect x="${x0}" y="${y0}" width="${x1-x0}" height="${(y75-y0).toFixed(1)}" fill="#7B8DB8" opacity=".06"/>`
+    +`<rect x="${x0}" y="${y75.toFixed(1)}" width="${x1-x0}" height="${(y45-y75).toFixed(1)}" fill="#D87EC8" opacity=".06"/>`
+    +`<rect x="${x0}" y="${y45.toFixed(1)}" width="${x1-x0}" height="${(y1-y45).toFixed(1)}" fill="#C4884A" opacity=".06"/>`;
+  let grid='';
+  [0,25,50,75,100].forEach(v=>{
+    const y=Y(v).toFixed(1);
+    grid+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#E4DFFA" stroke-width="1"/>`
+        +`<text x="${x0-8}" y="${Number(y)+3}" text-anchor="end" font-size="9" fill="#9590A8">${v}%</text>`;
+  });
+  let ticks='';
+  sessions.forEach((s,i)=>{const x=X(i).toFixed(1);ticks+=`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y1+4}" stroke="#C9C2E0" stroke-width="1"/>`;});
+  const fmtDate=t=>{const d=new Date(t).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});return d.charAt(0).toUpperCase()+d.slice(1).replace('.','');};
+  let xlabels=`<text x="${X(0).toFixed(1)}" y="${y1+18}" text-anchor="start" font-size="9.5" fill="#8882AA">${fmtDate(times[0])}</text>`;
+  if(n>2){
+    const mid=Math.floor((n-1)/2);
+    xlabels+=`<text x="${X(mid).toFixed(1)}" y="${y1+18}" text-anchor="middle" font-size="9.5" fill="#8882AA">${fmtDate(times[mid])}</text>`;
+  }
+  if(n>1)xlabels+=`<text x="${X(n-1).toFixed(1)}" y="${y1+18}" text-anchor="end" font-size="9.5" fill="#8882AA">${fmtDate(times[n-1])}</text>`;
+  let lines='';
+  cats.forEach(cat=>{
+    const pts=[];
+    sessions.forEach((s,i)=>{
+      const cs=s.catScores&&s.catScores[cat];
+      if(cs&&cs.pattern&&cs.pattern!=='not_applicable')pts.push({x:X(i),y:Y(cs.score),pattern:cs.pattern});
+    });
+    if(!pts.length)return;
+    if(pts.length>1){
+      const d=pts.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+      lines+=`<path d="${d}" fill="none" stroke="${domColors[cat]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".82"/>`;
+    }
+    pts.forEach(p=>{lines+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${patColors[p.pattern]}" stroke="#fff" stroke-width="1.4"/>`;});
+  });
+  return `<svg viewBox="0 0 640 258" role="img" aria-label="Evolução do desenvolvimento por área ao longo do tempo">
+    ${bands}${grid}${lines}
+    <line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y1}" stroke="#C9C2E0" stroke-width="1"/>
+    ${ticks}${xlabels}
+  </svg>`;
+}
+
+// Compara a primeira com a última avaliação em que cada área foi respondida
+// (ignora "não avaliado"), pra dar um número de resumo além da linha do gráfico.
+function progressDeltaHtml(sessions){
+  const cats=['communication','motor','social','autonomy','sensory'];
+  const rows=cats.map(cat=>{
+    const ci=CAT_INFO[cat];
+    const rated=sessions.map(s=>s.catScores&&s.catScores[cat]).filter(cs=>cs&&cs.pattern!=='not_applicable');
+    if(rated.length<2)return `<div class="prog-row"><span class="prog-cat">${ci.emoji} ${ci.label}</span><span class="prog-delta-txt muted">dados insuficientes</span></div>`;
+    const first=rated[0].score,last=rated[rated.length-1].score,diff=last-first;
+    const arrow=diff>=8?'▲':diff<=-8?'▼':'▬';
+    const cls=diff>=8?'up':diff<=-8?'down':'stable';
+    const sign=diff>0?'+':'';
+    return `<div class="prog-row"><span class="prog-cat">${ci.emoji} ${ci.label}</span><span class="prog-delta-txt ${cls}">${first}% → ${last}% <b>${arrow} ${sign}${diff}</b></span></div>`;
+  }).join('');
+  return `<div class="ms-card"><div class="ms-head"><span>📊</span><span>Primeira × última avaliação</span></div><div class="ms-sub">Considera só as áreas respondidas em ambas as datas.</div>${rows}</div>`;
+}
+
+function renderProgress(){
+  const host=document.getElementById('progress-body');
+  if(!host)return;
+  const all=JSON.parse(localStorage.getItem('ps_sessions')||'[]');
+  const groups={};
+  all.forEach(s=>{const key=(s.childName||'').trim()||'(sem nome)';(groups[key]=groups[key]||[]).push(s);});
+  const eligible=Object.keys(groups).filter(k=>groups[k].length>=2).sort((a,b)=>groups[b].length-groups[a].length);
+  if(!eligible.length){
+    host.innerHTML=`<div class="hist-empty"><span class="hist-empty-icon">📈</span><p>Ainda não há avaliações suficientes para traçar uma evolução.<br>Salve ao menos 2 avaliações com o mesmo nome de criança para ver o progresso ao longo do tempo.</p><br><button class="btn btn-primary" onclick="showHome()">Iniciar Avaliação</button></div>`;
+    return;
+  }
+  if(!progressChildSel||!eligible.includes(progressChildSel))progressChildSel=eligible[0];
+  const sel=eligible.length>1?`<div class="name-field" style="margin-bottom:1.1rem"><label>Criança</label><select class="name-input" onchange="progressChildSel=this.value;renderProgress();">${eligible.map(k=>`<option value="${k}" ${k===progressChildSel?'selected':''}>${k} (${groups[k].length} avaliações)</option>`).join('')}</select></div>`:'';
+  const sessions=groups[progressChildSel].slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const first=new Date(sessions[0].date),last=new Date(sessions[sessions.length-1].date);
+  const rangeTxt=sessions.length+' avaliações entre '+first.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})+' e '+last.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const legend=['communication','motor','social','autonomy','sensory'].map(cat=>{
+    const ci=CAT_INFO[cat];
+    const c={communication:'#8B7BC4',motor:'#6B8BB8',social:'#C87EC8',autonomy:'#9B80C4',sensory:'#7B9BB8'}[cat];
+    return `<span class="prog-legend-item"><span class="prog-legend-dot" style="background:${c}"></span>${ci.emoji} ${ci.label}</span>`;
+  }).join('');
+  host.innerHTML=`${sel}
+    <div class="lotus-wrap">
+      <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:.7rem">${rangeTxt}</div>
+      ${buildProgressChart(sessions)}
+      <div class="prog-legend">${legend}</div>
+      <p class="lotus-caption">As bolinhas mostram a classificação de cada avaliação: azul-acinzentado (esperado), rosa (variável), âmbar (observar de perto).</p>
+    </div>
+    ${progressDeltaHtml(sessions)}`;
 }
 
 function whatsappShare(){
