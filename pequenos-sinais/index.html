@@ -800,6 +800,17 @@ function renderLotus(catScores){
 function renderMilestones(){
   const host=document.getElementById('milestones-wrap');
   if(!host)return;
+  // Avaliações salvas antes desta atualização não têm respostas item a item
+  // guardadas. Sem essa distinção, "nenhuma resposta salva" cairia no mesmo
+  // aviso de acolhimento pensado para o caso genuíno de todas as respostas
+  // negativas — o que seria enganoso para um resultado antigo que era bom.
+  if(!Object.keys(state.responses||{}).length){
+    host.innerHTML=`<div class="ms-card">
+      <div class="ms-head"><span>📋</span><span>Detalhamento não disponível</span></div>
+      <div class="ms-sub">Esta avaliação foi salva antes desta atualização do aplicativo, então não guardamos as respostas item a item — apenas o resultado por área acima.</div>
+    </div>`;
+    return;
+  }
   const conquistados=[],emergindo=[];
   state.questions.forEach(q=>{
     const v=state.responses[q.id];
@@ -982,8 +993,29 @@ function renderHistory(){
       const sc=s.catScores[cat];
       return `<div class="hist-minibar" style="background:${catColors[sc?.pattern]||'#ccc'}"></div>`;
     }).join('');
-    return `<div class="hist-card"><div class="hist-top"><div><div class="hist-name">${s.childName?s.childName+' · ':''}${AGE_LABELS[s.ageGroup]}</div><div class="hist-meta">${dateStr}</div></div><div class="hist-score-col"><div class="hist-pct">${domainSummary(s.catScores).big}</div><div class="hist-pattern">${pc?.label||s.overallPattern}</div></div></div><div class="hist-minibars">${bars}</div></div>`;
+    return `<div class="hist-card" onclick="openHistorySession('${s.id}')"><div class="hist-top"><div><div class="hist-name">${s.childName?s.childName+' · ':''}${AGE_LABELS[s.ageGroup]}</div><div class="hist-meta">${dateStr}</div></div><div class="hist-score-col"><div class="hist-pct">${domainSummary(s.catScores).big}</div><div class="hist-pattern">${pc?.label||s.overallPattern}</div></div></div><div class="hist-minibars">${bars}</div></div>`;
   }).join('');
+}
+
+// Reabre uma avaliação salva na mesma tela rica do resultado (flor + marcos),
+// em vez de deixar o histórico só como uma lista de cartões sem ação.
+function openHistorySession(id){
+  const sessions=JSON.parse(localStorage.getItem('ps_sessions')||'[]');
+  const s=sessions.find(x=>x.id===id);
+  if(!s)return;
+  state.ageGroup=s.ageGroup;
+  state.childName=s.childName||'';
+  state.questions=QUESTIONS[s.ageGroup]||[];
+  state.responses=Object.assign({},s.responses||{});
+  currentSessionId=s.id;
+  const hasItemData=Object.keys(state.responses).length>0;
+  // Avaliações com respostas item a item salvas são recalculadas com a lógica
+  // atual (ex.: o fix do "às vezes"), em vez de ficarem presas ao resultado
+  // congelado no momento em que foram salvas. Sessões de antes desta
+  // atualização não têm respostas salvas — usam o resultado congelado mesmo.
+  state.result=hasItemData?calcResults():{catScores:s.catScores,overallPattern:s.overallPattern,avgScore:s.avgScore,ageGroup:s.ageGroup};
+  renderResults();
+  showScreen('results');
 }
 
 function whatsappShare(){
